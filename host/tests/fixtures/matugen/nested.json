@@ -1,0 +1,37 @@
+{
+  "colors": {
+    "primary": {
+      "dark": {
+        "hex": "#a8b665"
+      },
+      "light": {
+        "hex": "#586420"
+      },
+      "default": {
+        "hex": "#a8b665"
+      }
+    },
+    "surface": {
+      "dark": {
+        "hex": "#1d2021"
+      },
+      "light": {
+        "hex": "#fbf8f2"
+      },
+      "default": {
+        "hex": "#1d2021"
+      }
+    },
+    "on_surface": {
+      "dark": {
+        "hex": "#ddc7a1"
+      },
+      "light": {
+        "hex": "#1d1b18"
+      },
+      "default": {
+        "hex": "#ddc7a1"
+      }
+    }
+  }
+}

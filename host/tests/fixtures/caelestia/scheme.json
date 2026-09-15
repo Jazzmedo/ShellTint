@@ -1,0 +1,28 @@
+{
+  "name": "dynamic",
+  "flavour": "default",
+  "mode": "light",
+  "variant": "tonalspot",
+  "colours": {
+    "primary_paletteKeyColor": "7e8a4f",
+    "background": "fbf8f2",
+    "onBackground": "1d1b18",
+    "surface": "fbf8f2",
+    "onSurface": "1d1b18",
+    "surfaceContainer": "efece6",
+    "surfaceContainerHigh": "e9e6e0",
+    "primary": "586420",
+    "onPrimary": "ffffff",
+    "primaryContainer": "dcea9a",
+    "secondary": "5d6146",
+    "tertiary": "3a6658",
+    "error": "ba1a1a",
+    "outline": "79776e",
+    "success": "4f6f2f",
+    "term0": "353434",
+    "term1": "b3261e",
+    "term2": "4f7d3a",
+    "term3": "8a6d1f",
+    "term15": "f4f0ea"
+  }
+}
