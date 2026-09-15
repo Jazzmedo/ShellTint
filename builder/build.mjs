@@ -48,7 +48,8 @@ function parseArgs(argv) {
     force: false,
     only: null,
     mode: null,
-    jobs: Math.max(1, Math.min(6, os.cpus().length - 1)),
+    // A quarter of the cores: a theme change should not saturate the desktop.
+    jobs: Math.max(1, Number(process.env.SHELLTINT_BUILD_JOBS) || Math.min(4, Math.floor(os.cpus().length / 4))),
     out: path.join(CACHE, 'userstyles'),
     bundle: process.env.SHELLTINT_BUNDLE || path.join(CACHE, 'catppuccin'),
     palette: path.join(CACHE, 'palette.json'),

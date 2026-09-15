@@ -79,7 +79,8 @@ say "new Catppuccin styles; rebuilding"
     exit 0
   fi
   "$python" "$root/host/shelltint_palette.py" state building
-  nice -n 10 "$node" "$root/builder/build.mjs" --bundle "$tmp" --palette "$cache/palette.json"
+  if command -v ionice >/dev/null; then idle=(nice -n 19 ionice -c 3); else idle=(nice -n 19); fi
+  "${idle[@]}" "$node" "$root/builder/build.mjs" --bundle "$tmp" --palette "$cache/palette.json"
   code=$?
   "$python" "$root/host/shelltint_palette.py" state build "$code"
   if [ "$code" -eq 0 ]; then

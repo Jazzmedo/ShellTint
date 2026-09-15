@@ -21,6 +21,8 @@ node="$(ls -d "$HOME"/.nvm/versions/node/*/bin/node 2>/dev/null | sort -V | tail
 [ -x "$node" ] || node="$(command -v node || true)"
 python="$(command -v python3 || true)"
 say() { printf '[%s] rebuild: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >>"$log"; }
+# Lowest CPU and disk priority, so the build only uses time nothing else wants.
+idle() { if command -v ionice >/dev/null; then nice -n 19 ionice -c 3 "$@"; else nice -n 19 "$@"; fi; }
 [ -n "$node" ] || { say "node is not installed"; exit 0; }
 [ -n "$python" ] || { say "python3 is not installed"; exit 0; }
 [ -f "$cache/catppuccin/import.json" ] || { say "no Catppuccin bundle yet; run update.sh"; exit 0; }
@@ -36,7 +38,7 @@ while :; do
         continue
       fi
       "$python" "$root/host/shelltint_palette.py" state building
-      nice -n 10 "$node" "$root/builder/build.mjs" --palette "$cache/palette.json" "${force[@]}" >>"$log" 2>&1
+      idle "$node" "$root/builder/build.mjs" --palette "$cache/palette.json" "${force[@]}" >>"$log" 2>&1
       "$python" "$root/host/shelltint_palette.py" state build "$?"
       force=()
     done
