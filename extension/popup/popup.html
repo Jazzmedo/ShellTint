@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ShellTint</title>
+    <link rel="stylesheet" href="../styles/tokens.css">
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="stripe" id="stripe" aria-hidden="true">
+        <span data-role="primary"></span>
+        <span data-role="secondary"></span>
+        <span data-role="tertiary"></span>
+        <span data-role="primary_container"></span>
+        <span data-role="surface_variant"></span>
+    </div>
+
+    <section class="site">
+        <div class="site-text">
+            <div class="site-host" id="site-host">…</div>
+            <div class="site-style" id="site-style"></div>
+        </div>
+        <input type="checkbox" role="switch" class="site-switch" id="site-switch" aria-labelledby="site-host" hidden>
+    </section>
+
+    <section class="switches">
+        <label class="switch-row">
+            <span>All websites</span>
+            <input type="checkbox" role="switch" data-setting="websiteStyling">
+        </label>
+        <label class="switch-row">
+            <span>Toolbar colours</span>
+            <input type="checkbox" role="switch" data-setting="toolbarTheming">
+        </label>
+    </section>
+
+    <footer class="foot">
+        <span class="foot-status">
+            <span class="st-dot" id="status-dot"></span>
+            <span id="status-text">Checking helper…</span>
+        </span>
+        <button class="st-btn st-btn--quiet gear" id="open-settings" type="button" aria-label="Open ShellTint settings" title="Settings">
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M9.4 1l.3 1.8c.4.1.8.3 1.1.5l1.5-1 1.4 1.4-1 1.5c.2.4.4.7.5 1.1l1.8.3v2l-1.8.3c-.1.4-.3.8-.5 1.1l1 1.5-1.4 1.4-1.5-1c-.4.2-.7.4-1.1.5L9.4 15h-2l-.3-1.8c-.4-.1-.8-.3-1.1-.5l-1.5 1-1.4-1.4 1-1.5c-.2-.4-.4-.7-.5-1.1L1.8 9.4v-2l1.8-.3c.1-.4.3-.8.5-1.1l-1-1.5 1.4-1.4 1.5 1c.4-.2.7-.4 1.1-.5L7.4 1h2zm-1 4.5a2.9 2.9 0 100 5.8 2.9 2.9 0 000-5.8z"/></svg>
+        </button>
+    </footer>
+
+    <script src="../shared/defaults.js"></script>
+    <script src="../shared/matchers.js"></script>
+    <script src="../shared/ui-kit.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>

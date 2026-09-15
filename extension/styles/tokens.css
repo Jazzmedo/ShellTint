@@ -1,0 +1,221 @@
+/* ShellTint design tokens. The shell's palette overrides the colours at runtime. */
+
+:root {
+    --st-surface: #15151b;
+    --st-surface-2: #1c1c24;
+    --st-surface-3: #25252f;
+    --st-on-surface: #e6e3ee;
+    --st-on-surface-muted: #a9a6b6;
+    --st-primary: #b9a8ff;
+    --st-on-primary: #25184f;
+    --st-primary-container: #3d3470;
+    --st-on-primary-container: #e5deff;
+    --st-secondary: #c8c2dc;
+    --st-tertiary: #7fd6c6;
+    --st-outline: #3a3945;
+    --st-danger: #ffb4ab;
+    --st-ok: #9fd8a0;
+    --st-warn: #e8c27a;
+
+    --st-space-1: 4px;
+    --st-space-2: 8px;
+    --st-space-3: 12px;
+    --st-space-4: 16px;
+    --st-space-5: 24px;
+    --st-space-6: 32px;
+    --st-radius: 4px;
+    --st-font: system-ui, -apple-system, "Segoe UI", Cantarell, "Noto Sans", sans-serif;
+    --st-mono: ui-monospace, "JetBrains Mono", "DejaVu Sans Mono", monospace;
+    --st-ease: cubic-bezier(0.2, 0, 0, 1);
+    --st-duration: 140ms;
+    color-scheme: dark;
+}
+
+:root[data-mode="light"] {
+    --st-surface: #fbf8ff;
+    --st-surface-2: #f2eef9;
+    --st-surface-3: #e8e3f2;
+    --st-on-surface: #1c1b22;
+    --st-on-surface-muted: #5b5868;
+    --st-primary: #5b4bb0;
+    --st-on-primary: #ffffff;
+    --st-primary-container: #e5deff;
+    --st-on-primary-container: #1b0f4d;
+    --st-secondary: #605b72;
+    --st-tertiary: #1f6b60;
+    --st-outline: #cbc6d6;
+    --st-danger: #ba1a1a;
+    --st-ok: #2e6b34;
+    --st-warn: #7a5a12;
+    color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root { --st-duration: 0ms; }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+    font: 15px/1.5 var(--st-font);
+    background: var(--st-surface);
+    color: var(--st-on-surface);
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, p, dl, dd, ul, ol { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+button, input, textarea, select { font: inherit; color: inherit; }
+a { color: var(--st-primary); text-underline-offset: 2px; }
+code { font-family: var(--st-mono); font-size: 0.86em; }
+[hidden] { display: none !important; }
+
+:focus-visible {
+    outline: 2px solid var(--st-primary);
+    outline-offset: 2px;
+}
+
+.st-muted { color: var(--st-on-surface-muted); }
+.st-danger { color: var(--st-danger); }
+
+/* Section titles in small caps with a hairline rule. */
+.st-heading {
+    display: flex;
+    align-items: center;
+    gap: var(--st-space-3);
+    font-size: 12px;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--st-on-surface-muted);
+}
+.st-heading::after {
+    content: "";
+    flex: 1;
+    border-top: 1px solid var(--st-outline);
+}
+
+/* Pill switch. */
+input[type="checkbox"][role="switch"] {
+    appearance: none;
+    flex: none;
+    position: relative;
+    width: 40px;
+    height: 22px;
+    margin: 0;
+    border: 1px solid var(--st-outline);
+    border-radius: 11px;
+    background: var(--st-surface-3);
+    cursor: pointer;
+    transition: background var(--st-duration) var(--st-ease), border-color var(--st-duration) var(--st-ease);
+}
+input[type="checkbox"][role="switch"]::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--st-on-surface-muted);
+    transition: transform var(--st-duration) var(--st-ease), background var(--st-duration) var(--st-ease);
+}
+input[type="checkbox"][role="switch"]:checked {
+    background: var(--st-primary);
+    border-color: var(--st-primary);
+}
+input[type="checkbox"][role="switch"]:checked::before {
+    transform: translateX(18px);
+    background: var(--st-on-primary);
+}
+input[type="checkbox"][role="switch"]:disabled { opacity: 0.4; cursor: default; }
+
+/* Segmented control: a fieldset of radio inputs, each followed by its label. */
+.st-segmented {
+    display: inline-flex;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--st-outline);
+    border-radius: var(--st-radius);
+    overflow: hidden;
+}
+.st-segmented input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+.st-segmented label {
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    border-left: 1px solid var(--st-outline);
+    transition: background var(--st-duration) var(--st-ease), color var(--st-duration) var(--st-ease);
+}
+.st-segmented label:first-of-type { border-left: 0; }
+.st-segmented label:hover { background: var(--st-surface-3); }
+.st-segmented input:checked + label {
+    background: var(--st-primary-container);
+    color: var(--st-on-primary-container);
+    font-weight: 600;
+}
+.st-segmented input:focus-visible + label {
+    outline: 2px solid var(--st-primary);
+    outline-offset: -2px;
+}
+
+/* Buttons. */
+.st-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--st-space-2);
+    padding: 6px 14px;
+    border: 1px solid var(--st-outline);
+    border-radius: var(--st-radius);
+    background: var(--st-surface-2);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--st-duration) var(--st-ease), border-color var(--st-duration) var(--st-ease);
+}
+.st-btn:hover { background: var(--st-surface-3); }
+.st-btn:disabled { opacity: 0.5; cursor: default; }
+.st-btn--primary {
+    background: var(--st-primary);
+    border-color: var(--st-primary);
+    color: var(--st-on-primary);
+}
+.st-btn--primary:hover { background: var(--st-primary); filter: brightness(1.08); }
+.st-btn--quiet {
+    border-color: transparent;
+    background: transparent;
+    color: var(--st-on-surface-muted);
+}
+.st-btn--quiet:hover { background: var(--st-surface-3); color: var(--st-on-surface); }
+
+.st-input {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid var(--st-outline);
+    border-radius: var(--st-radius);
+    background: var(--st-surface-2);
+    font-family: var(--st-mono);
+    font-size: 13px;
+}
+.st-input:focus { outline: none; border-color: var(--st-primary); }
+
+/* Status dot: data-state="ok|warn|off". */
+.st-dot {
+    display: inline-block;
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--st-on-surface-muted);
+}
+.st-dot[data-state="ok"] { background: var(--st-ok); }
+.st-dot[data-state="warn"] { background: var(--st-warn); }
+.st-dot[data-state="off"] { background: var(--st-danger); }

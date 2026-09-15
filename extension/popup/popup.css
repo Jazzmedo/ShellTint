@@ -1,0 +1,64 @@
+/* ShellTint toolbar popup. */
+
+body { width: 300px; font-size: 14px; }
+
+.stripe { display: flex; height: 4px; }
+.stripe span { flex: 1; background: var(--st-surface-3); }
+
+.site {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--st-space-3);
+    padding: var(--st-space-4);
+    border-bottom: 1px solid var(--st-outline);
+}
+.site-text { min-width: 0; }
+.site-host {
+    font-size: 17px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.site-style { margin-top: 2px; font-size: 12px; color: var(--st-on-surface-muted); }
+
+/* The per-site switch is the main control, so it is larger. */
+input[type="checkbox"][role="switch"].site-switch {
+    width: 52px;
+    height: 28px;
+    border-radius: 14px;
+}
+input[type="checkbox"][role="switch"].site-switch::before {
+    top: 4px;
+    left: 4px;
+    width: 18px;
+    height: 18px;
+}
+input[type="checkbox"][role="switch"].site-switch:checked::before { transform: translateX(24px); }
+
+.switches { padding: var(--st-space-1) 0; border-bottom: 1px solid var(--st-outline); }
+.switch-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--st-space-2) var(--st-space-4);
+    font-size: 13px;
+    cursor: pointer;
+}
+.switch-row:hover { background: var(--st-surface-2); }
+
+.foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--st-space-1) var(--st-space-1) var(--st-space-1) var(--st-space-4);
+}
+.foot-status {
+    display: flex;
+    align-items: center;
+    gap: var(--st-space-2);
+    font-size: 12px;
+    color: var(--st-on-surface-muted);
+}
+.gear { padding: 6px; }

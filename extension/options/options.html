@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ShellTint settings</title>
+    <link rel="stylesheet" href="../styles/tokens.css">
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-row">
+            <div class="wordmark">
+                <img src="../icons/icon.svg" alt="" width="22" height="22">
+                <span>ShellTint</span>
+            </div>
+            <div class="helper-status" id="helper-status" role="status">
+                <span class="st-dot" id="helper-dot"></span>
+                <span id="helper-text">Connecting…</span>
+            </div>
+        </div>
+        <nav class="tabs" role="tablist" aria-label="Settings sections">
+            <button class="tab" role="tab" id="tab-overview" aria-controls="overview" data-tab="overview">Overview</button>
+            <button class="tab" role="tab" id="tab-colours" aria-controls="colours" data-tab="colours">Colours</button>
+            <button class="tab" role="tab" id="tab-websites" aria-controls="websites" data-tab="websites">Websites</button>
+            <button class="tab" role="tab" id="tab-maintenance" aria-controls="maintenance" data-tab="maintenance">Maintenance</button>
+            <button class="tab" role="tab" id="tab-about" aria-controls="about" data-tab="about">About</button>
+        </nav>
+    </header>
+
+    <main class="page">
+        <!-- Overview -->
+        <section class="panel" id="overview" role="tabpanel" aria-labelledby="tab-overview">
+            <div class="callout callout--warn" id="permission-banner" hidden>
+                <div>
+                    <strong>ShellTint can't reach websites yet.</strong>
+                    <p>Allow access to all websites so it can restyle them.</p>
+                </div>
+                <button class="st-btn st-btn--primary" id="permission-grant" type="button">Allow access</button>
+            </div>
+
+            <div class="callout callout--danger" id="helper-callout" hidden>
+                <div>
+                    <strong>The ShellTint helper isn't connected</strong>
+                    <p id="helper-callout-detail">Install the helper, then restart the browser. <a href="https://github.com/Jazzmedo/ShellTint#install" target="_blank" rel="noopener">How to install it</a></p>
+                </div>
+                <button class="st-btn" id="helper-retry" type="button">Retry</button>
+            </div>
+
+            <div class="hero">
+                <div class="swatches" id="swatches" aria-label="Current palette"></div>
+                <p class="hero-caption" id="hero-caption">No palette yet</p>
+            </div>
+
+            <h2 class="st-heading">Status</h2>
+            <dl class="status-list" id="status-list"></dl>
+
+            <h2 class="st-heading">Switches</h2>
+            <div class="rows">
+                <label class="row">
+                    <span class="row-text">
+                        <span class="row-label">Toolbar colours</span>
+                        <span class="row-hint">Paint tabs, toolbar and menus with your shell's palette</span>
+                    </span>
+                    <input type="checkbox" role="switch" data-setting="toolbarTheming">
+                </label>
+                <label class="row">
+                    <span class="row-text">
+                        <span class="row-label">Website styling</span>
+                        <span class="row-hint">Restyle supported websites with recoloured Catppuccin styles</span>
+                    </span>
+                    <input type="checkbox" role="switch" data-setting="websiteStyling">
+                </label>
+            </div>
+        </section>
+
+        <!-- Colours -->
+        <section class="panel" id="colours" role="tabpanel" aria-labelledby="tab-colours" hidden>
+            <h2 class="st-heading">Palette source</h2>
+            <div class="field">
+                <div id="source-control"></div>
+                <p class="field-hint">Auto uses the first source found, in the order listed below.</p>
+            </div>
+
+            <div class="field" id="custom-path-field" hidden>
+                <label class="field-label" for="custom-path">Matugen output file</label>
+                <div class="inline">
+                    <input class="st-input" id="custom-path" type="text" spellcheck="false" autocomplete="off" placeholder="~/.config/matugen/generated/colors.json">
+                    <button class="st-btn" id="custom-path-check" type="button">Check</button>
+                </div>
+                <p class="field-hint" id="custom-path-result">A JSON file or CSS variables with Material 3 colour names.</p>
+            </div>
+
+            <div class="field">
+                <div class="field-head">
+                    <span class="field-label">Detected on this computer</span>
+                    <button class="st-btn st-btn--quiet" id="sources-refresh" type="button">Refresh</button>
+                </div>
+                <ul class="source-list" id="source-list"></ul>
+            </div>
+
+            <h2 class="st-heading">Light and dark</h2>
+            <div class="field" id="mode-control"></div>
+
+            <h2 class="st-heading">Toolbar style</h2>
+            <div class="field style-field">
+                <div id="style-control"></div>
+                <div class="preview" id="preview" aria-hidden="true">
+                    <div class="preview-frame" data-part="frame">
+                        <div class="preview-tabs">
+                            <span class="preview-tab preview-tab--selected" data-part="tab-selected">
+                                <span class="preview-tab-line" data-part="tab-line"></span>
+                                <span class="preview-tab-text" data-part="tab-text">youtube.com</span>
+                            </span>
+                            <span class="preview-tab" data-part="tab-background">github.com</span>
+                        </div>
+                        <div class="preview-toolbar" data-part="toolbar">
+                            <span class="preview-icon" data-part="icon"></span>
+                            <span class="preview-icon" data-part="icon"></span>
+                            <span class="preview-field" data-part="field">https://youtube.com</span>
+                            <span class="preview-icon" data-part="icon"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Websites -->
+        <section class="panel" id="websites" role="tabpanel" aria-labelledby="tab-websites" hidden>
+            <div class="rows">
+                <label class="row">
+                    <span class="row-text">
+                        <span class="row-label">Website styling</span>
+                        <span class="row-hint">Turns every website style on or off</span>
+                    </span>
+                    <input type="checkbox" role="switch" data-setting="websiteStyling">
+                </label>
+            </div>
+
+            <h2 class="st-heading">Paused sites</h2>
+            <div class="field">
+                <ul class="paused-list" id="paused-list"></ul>
+                <p class="field-hint" id="paused-empty">No paused sites. Pause one from the toolbar button.</p>
+                <button class="st-btn" id="paused-clear" type="button" hidden>Resume all</button>
+            </div>
+
+            <h2 class="st-heading">SearXNG instances</h2>
+            <div class="field">
+                <label class="field-label" for="searxng">Style these with the SearXNG theme, one per line</label>
+                <textarea class="st-input" id="searxng" rows="4" spellcheck="false" autocomplete="off" placeholder="searxng.home.local&#10;https://search.example.com/searx/"></textarea>
+                <p class="field-hint" id="searxng-feedback">A hostname, or a full URL to style only that path.</p>
+            </div>
+
+            <h2 class="st-heading">Styles that failed to build</h2>
+            <div class="field">
+                <details class="failed" id="failed-details">
+                    <summary id="failed-summary">None</summary>
+                    <ul class="failed-list" id="failed-list"></ul>
+                </details>
+            </div>
+        </section>
+
+        <!-- Maintenance -->
+        <section class="panel" id="maintenance" role="tabpanel" aria-labelledby="tab-maintenance" hidden>
+            <h2 class="st-heading">Styles</h2>
+            <div class="actions">
+                <div class="action">
+                    <button class="st-btn st-btn--primary" id="rebuild" type="button">Rebuild styles now</button>
+                    <span class="action-result" id="rebuild-result"></span>
+                </div>
+                <div class="action">
+                    <button class="st-btn" id="check-updates" type="button">Check Catppuccin for updates</button>
+                    <span class="action-result" id="update-result"></span>
+                </div>
+                <div class="action">
+                    <button class="st-btn" id="reconnect" type="button">Reconnect helper</button>
+                    <span class="action-result" id="reconnect-result"></span>
+                </div>
+            </div>
+
+            <h2 class="st-heading">Paths</h2>
+            <dl class="paths" id="paths"></dl>
+        </section>
+
+        <!-- About -->
+        <section class="panel" id="about" role="tabpanel" aria-labelledby="tab-about" hidden>
+            <div class="about">
+                <p class="about-title"><span id="about-version">ShellTint</span> by Jazzmedo · MIT licence</p>
+                <p>Based on <a href="https://github.com/Ubaidullah-Web-Dev/MatugenFox" target="_blank" rel="noopener">MatugenFox by Ubaid</a>.</p>
+                <p>Website styles: <a href="https://github.com/catppuccin/userstyles" target="_blank" rel="noopener">Catppuccin userstyles</a> (MIT), recoloured on your computer.</p>
+                <p class="st-muted">ShellTint collects no data. The only network use is the helper downloading Catppuccin's public style bundle.</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="../shared/defaults.js"></script>
+    <script src="../shared/matchers.js"></script>
+    <script src="../shared/theme-map.js"></script>
+    <script src="../shared/ui-kit.js"></script>
+    <script src="options.js"></script>
+</body>
+</html>
