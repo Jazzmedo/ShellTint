@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "ShellTint",
+  "version": "1.0.0",
+  "description": "Colours the browser and 130+ websites with your Linux desktop shell's palette: DankMaterialShell, Caelestia, Noctalia, end-4 or any matugen output.",
+  "author": "Jazzmedo",
+  "homepage_url": "https://github.com/Jazzmedo/ShellTint",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": ["nativeMessaging", "storage", "theme", "scripting", "webNavigation"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "scripts": [
+      "shared/defaults.js",
+      "shared/matchers.js",
+      "shared/theme-map.js",
+      "background/state.js",
+      "background/host.js",
+      "background/theme.js",
+      "background/userstyles.js",
+      "background/main.js"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content/frame-ping.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "action": {
+    "default_title": "ShellTint",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png"
+    }
+  },
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "shelltint@jazzmedo",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  }
+}
