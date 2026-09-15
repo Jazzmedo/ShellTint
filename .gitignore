@@ -1,0 +1,9 @@
+node_modules/
+dist/
+web-ext-artifacts/
+__pycache__/
+*.pyc
+*.tmp*
+*.swp
+*~
+.DS_Store
