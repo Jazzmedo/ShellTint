@@ -1,0 +1,15 @@
+{
+  "name": "shelltint-builder",
+  "private": true,
+  "type": "module",
+  "description": "Compiles Catppuccin userstyles with a desktop shell palette for ShellTint",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test \"test/*.test.mjs\""
+  },
+  "dependencies": {
+    "less": "4.9.1",
+    "postcss": "8.5.28"
+  },
+  "license": "MIT"
+}
