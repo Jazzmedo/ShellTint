@@ -39,15 +39,28 @@ If `protocol` in `ST_HELLO` does not match, the extension reports that the helpe
 
 | Type | From | Result |
 | --- | --- | --- |
-| `st:get-state` | options, popup | `{settings, host, palette, sources, styles, build}` |
+| `st:get-state` | options, popup | `{settings, host, palette, sources, styles, build, customStyles}` |
 | `st:update-settings` | options, popup | `{patch}` → `{ok, settings}` |
-| `st:site-state` | popup | `{url}` → `{host, siteKey, themeable, styles, built, siteEnabled, globalEnabled}` |
+| `st:site-state` | popup | `{url}` → `{host, siteKey, themeable, styles, customStyles, built, siteEnabled, globalEnabled}`; `customStyles` lists own styles matching the page, disabled ones included |
+| `st:save-style` | options | `{style}` → `{ok, style}` or `{ok: false, error}`; a style without `id` is created |
+| `st:toggle-style` | options, popup | `{id, enabled}` → `{ok}` |
+| `st:delete-style` | options | `{id}` → `{ok}` |
 | `st:detect-sources` | options | forwards `ST_DETECT_SOURCES`, resolves with `ST_SOURCES` |
 | `st:rebuild` | options | forwards `ST_REBUILD`, resolves with `ST_ACTION_RESULT` |
 | `st:check-updates` | options | forwards `ST_CHECK_UPDATES`, resolves with `ST_ACTION_RESULT` |
 | `st:reconnect` | options | reconnects to the helper now |
 | `st:frame-ready` | content script | applies styles to that frame |
-| `st:changed` | background → pages (broadcast) | `{part: 'settings' \| 'host' \| 'palette' \| 'styles' \| 'build'}`; open pages re-query |
+| `st:changed` | background → pages (broadcast) | `{part: 'settings' \| 'host' \| 'palette' \| 'styles' \| 'build' \| 'sources' \| 'custom-styles'}`; open pages re-query |
+
+## Own styles
+
+Kept in `storage.local.customStyles`, never sent to the helper:
+
+```
+{id, name, enabled, sites, css, replaceCatppuccin, createdAt, updatedAt}
+```
+
+`sites` is the text as typed (one hostname or URL per line, `*` for every page). For a page, the background inserts one sheet: the Catppuccin blocks, then `:root { --shelltint-*: … }` with the palette, then each matching style's CSS in list order.
 
 ## palette.json (format 1)
 

@@ -42,6 +42,7 @@ When the shell changes theme, the browser and open tabs follow within seconds, w
 • Light and dark follow the shell, or can be forced
 • Pause styling on a single site from the toolbar button
 • Style your own SearXNG instances
+• My styles: write your own CSS for any site, like Stylus, using your shell colours as CSS variables
 • Automatic rebuilds when your palette or Catppuccin's styles change
 
 <b>Requirements</b>

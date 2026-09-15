@@ -7,7 +7,10 @@ let appliedThemeKey = null;
 function setPalette(palette, error) {
     const valid = palette && palette.format === 1 && palette.roles && typeof palette.roles === 'object';
     if (valid) {
+        // Own styles carry the colours as variables, so open pages need the new values.
+        const recolour = st.palette?.hash !== palette.hash && st.customStyles.some(s => s.enabled);
         st.palette = palette;
+        if (recolour) usRefreshAll();
         browser.storage.local.set({ lastPalette: palette }).catch(() => { });
     }
     st.paletteError = error;

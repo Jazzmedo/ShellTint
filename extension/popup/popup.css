@@ -62,3 +62,17 @@ input[type="checkbox"][role="switch"].site-switch:checked::before { transform: t
     color: var(--st-on-surface-muted);
 }
 .gear { padding: 6px; }
+
+.mystyles { padding: var(--st-space-2) 0 var(--st-space-1); border-bottom: 1px solid var(--st-outline); }
+.mystyles-heading { padding: 0 var(--st-space-4) var(--st-space-1); }
+.mystyles-list:empty { display: none; }
+.mystyle-row {
+    display: flex;
+    align-items: center;
+    gap: var(--st-space-2);
+    padding: 3px var(--st-space-2) 3px var(--st-space-4);
+    font-size: 13px;
+}
+.mystyle-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mystyle-row .st-btn { padding: 2px 8px; font-size: 12px; }
+.new-style { margin: 2px var(--st-space-2) 0; }

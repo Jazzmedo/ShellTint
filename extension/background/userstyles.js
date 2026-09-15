@@ -153,11 +153,14 @@ function usSiteState(url) {
             .map(style => style.name.replace(/\s+Catppuccin$/, ''))
         : [];
     const host = usHostOf(url);
+    const customStyles = STCustomStyles.matchingStyles(st.customStyles, url, { includeDisabled: true })
+        .map(({ id, name, enabled, replaceCatppuccin }) => ({ id, name, enabled, replaceCatppuccin }));
     return {
         host,
         siteKey: STMatchers.siteKey(host),
         themeable,
         styles,
+        customStyles,
         built: !!us.index,
         siteEnabled: !usSiteDisabled(url),
         globalEnabled: st.settings.websiteStyling,
@@ -190,20 +193,33 @@ function usEnsureFrame(tabId, frameId, url) {
     return run;
 }
 
+// The user's own styles for a page; they follow the Catppuccin blocks so they win ties.
+function usCustomCss(url) {
+    const mine = STCustomStyles.matchingStyles(st.customStyles, url);
+    return {
+        replace: mine.some(s => s.replaceCatppuccin),
+        css: STCustomStyles.cssFor(mine, st.palette, us.index?.palette),
+    };
+}
+
+const usJoin = (hashes, custom) => [hashes.length ? usCssFor(hashes) : '', custom].filter(Boolean).join('\n');
+
 async function usApplyFrame(tabId, frameId, url) {
     const key = usKey(tabId, frameId);
     const old = us.applied.get(key);
-    let hashes = usActive() && !usSiteDisabled(url) ? STMatchers.matchBlocks(usMatchIndex(), url) : [];
-    if (old && usSameList(old.hashes, hashes)) return;
-    if (!old && !hashes.length) return;
+    const on = st.settings.websiteStyling && !usSiteDisabled(url);
+    const custom = on ? usCustomCss(url) : { replace: false, css: '' };
+    let hashes = on && us.index && !custom.replace ? STMatchers.matchBlocks(usMatchIndex(), url) : [];
+    const unchanged = () => old && usSameList(old.hashes, hashes) && old.custom === custom.css;
+    if (unchanged()) return;
+    if (!old && !hashes.length && !custom.css) return;
 
-    let css = '';
     if (hashes.length) {
         await usFetchCss(hashes);
         hashes = hashes.filter(h => us.css.has(h));
-        if (old && usSameList(old.hashes, hashes)) return;
-        css = hashes.length ? usCssFor(hashes) : '';
+        if (unchanged()) return;
     }
+    const css = usJoin(hashes, custom.css);
 
     const target = { tabId, frameIds: [frameId] };
     // Insert before removing, so the page never flashes unstyled in between.
@@ -212,12 +228,12 @@ async function usApplyFrame(tabId, frameId, url) {
         let oldCss = old.css;
         if (oldCss === null) {
             await usFetchCss(old.hashes);
-            oldCss = old.hashes.every(h => us.css.has(h)) ? usCssFor(old.hashes) : null;
+            oldCss = old.hashes.every(h => us.css.has(h)) ? usJoin(old.hashes, old.custom) : null;
         }
         if (oldCss) await browser.scripting.removeCSS({ target, css: oldCss, origin: 'AUTHOR' }).catch(() => { });
     }
 
-    if (hashes.length) us.applied.set(key, { hashes, css });
+    if (css) us.applied.set(key, { hashes, custom: custom.css, css });
     else us.applied.delete(key);
     usPersistSoon();
 }
@@ -293,14 +309,15 @@ function usPersistSoon() {
     us.persistTimer = setTimeout(() => {
         us.persistTimer = null;
         const snapshot = {};
-        for (const [key, entry] of us.applied) snapshot[key] = entry.hashes;
+        for (const [key, entry] of us.applied) snapshot[key] = { hashes: entry.hashes, custom: entry.custom };
         browser.storage.session?.set({ usApplied: snapshot }).catch(() => { });
     }, 500);
 }
 
 browser.storage.session?.get('usApplied').then(res => {
-    for (const [key, hashes] of Object.entries(res?.usApplied || {})) {
-        if (!us.applied.has(key) && Array.isArray(hashes)) us.applied.set(key, { hashes, css: null });
+    for (const [key, entry] of Object.entries(res?.usApplied || {})) {
+        if (us.applied.has(key) || !Array.isArray(entry?.hashes)) continue;
+        us.applied.set(key, { hashes: entry.hashes, custom: typeof entry.custom === 'string' ? entry.custom : '', css: null });
     }
 }).catch(() => { });
 

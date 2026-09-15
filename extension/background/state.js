@@ -9,6 +9,7 @@ const st = {
     port: null,
     host: { connected: false, version: null, error: null, protocolMismatch: false, paths: null },
     palette: null,
+    customStyles: [],             // the user's own styles, see shared/custom-styles.js
     paletteError: null,
     sources: null,
     build: null,

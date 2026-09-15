@@ -54,7 +54,9 @@ function segmented(name, legend, options, current, onPick) {
 }
 
 // ─── Tabs ───
+// The hash names the tab; My styles adds a view after a slash (#my-styles/new?site=example.com).
 const TABS = [...document.querySelectorAll('.tab')];
+let currentHash = location.hash;
 
 function showTab(name, focus) {
     if (!TABS.some(t => t.dataset.tab === name)) name = 'overview';
@@ -67,11 +69,27 @@ function showTab(name, focus) {
     }
 }
 
+function currentTab() {
+    return location.hash.slice(1).split('/')[0];
+}
+
+function route() {
+    currentHash = location.hash;
+    const [tab, ...view] = location.hash.slice(1).split('/');
+    showTab(tab);
+    if (tab === 'my-styles') openStyleView(view.join('/'));
+    else closeEditor();
+}
+
+function goTo(name, focus) {
+    if (!confirmLeaveEditor()) return;
+    history.replaceState(null, '', `#${name}`);
+    route();
+    if (focus) TABS.find(t => t.dataset.tab === name)?.focus();
+}
+
 for (const tab of TABS) {
-    tab.addEventListener('click', () => {
-        history.replaceState(null, '', `#${tab.dataset.tab}`);
-        showTab(tab.dataset.tab);
-    });
+    tab.addEventListener('click', () => goTo(tab.dataset.tab));
     tab.addEventListener('keydown', event => {
         const i = TABS.indexOf(tab);
         let next = null;
@@ -81,12 +99,16 @@ for (const tab of TABS) {
         else if (event.key === 'End') next = TABS[TABS.length - 1];
         if (!next) return;
         event.preventDefault();
-        history.replaceState(null, '', `#${next.dataset.tab}`);
-        showTab(next.dataset.tab, true);
+        goTo(next.dataset.tab, true);
     });
 }
-window.addEventListener('hashchange', () => showTab(location.hash.slice(1)));
-showTab(location.hash.slice(1));
+window.addEventListener('hashchange', () => {
+    if (!confirmLeaveEditor()) {
+        history.replaceState(null, '', currentHash);
+        return;
+    }
+    route();
+});
 
 // ─── Settings ───
 async function update(patch) {
@@ -371,6 +393,343 @@ $('searxng').addEventListener('input', () => {
 });
 $('searxng').addEventListener('blur', saveSearxng);
 
+// ─── My styles ───
+const customStylesApi = globalThis.STCustomStyles || null;
+const STYLE_LIMITS = customStylesApi?.LIMITS || { maxStyles: 200, maxCss: 262144, maxName: 80 };
+const HEX = /^#[0-9a-f]{6}$/i;
+
+let customStyles = [];
+let stylesLoaded = false;
+let pendingStyleView = null;   // an #my-styles/<id> link opened before the styles arrived
+let editor = null;             // { id, base, saved, saving } while the editor is open
+let tabMovesFocus = false;
+
+const styleLines = text => String(text || '').split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+
+function formatBytes(bytes) {
+    return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+}
+
+function sitesSummary(sites) {
+    const lines = styleLines(sites);
+    if (lines.includes('*')) return 'All sites';
+    if (!lines.length) return 'No sites';
+    return lines.slice(0, 2).join(', ') + (lines.length > 2 ? ` +${lines.length - 2}` : '');
+}
+
+function showStyleNotice(text) {
+    $('style-notice').textContent = text || '';
+    $('style-notice').hidden = !text;
+}
+
+function renderStyleList() {
+    const list = $('style-list');
+    clear(list);
+    for (const style of customStyles) {
+        const name = style.name || 'Untitled style';
+        const text = el('div', { class: 'style-text' },
+            el('button', { class: 'style-name', type: 'button', text: name, onclick: () => { location.hash = `#my-styles/${encodeURIComponent(style.id)}`; } }),
+            el('span', { class: 'style-sites' }, sitesSummary(style.sites),
+                style.replaceCatppuccin ? el('span', { class: 'tag', text: 'Replaces Catppuccin' }) : null));
+        list.append(el('li', { class: 'style-item', dataset: { enabled: String(!!style.enabled) } },
+            el('input', {
+                type: 'checkbox', role: 'switch', checked: !!style.enabled, 'aria-label': `${name} on or off`,
+                onchange: event => toggleStyle(style, event.target.checked),
+            }),
+            text,
+            el('div', { class: 'style-actions' },
+                el('button', { class: 'st-btn st-btn--quiet', type: 'button', text: 'Edit', 'aria-label': `Edit ${name}`, onclick: () => { location.hash = `#my-styles/${encodeURIComponent(style.id)}`; } }),
+                el('button', { class: 'st-btn st-btn--quiet danger-btn', type: 'button', text: 'Delete', 'aria-label': `Delete ${name}`, onclick: () => deleteStyle(style) }))));
+    }
+    $('style-empty').hidden = customStyles.length > 0;
+    $('style-new').disabled = customStyles.length >= STYLE_LIMITS.maxStyles;
+}
+
+async function toggleStyle(style, enabled) {
+    style.enabled = enabled;
+    const res = await sendSafe({ type: 'st:toggle-style', id: style.id, enabled });
+    if (!res?.ok) {
+        style.enabled = !enabled;
+        showStyleNotice(res?.error || "Couldn't change the style");
+    }
+    renderStyleList();
+}
+
+async function deleteStyle(style) {
+    if (!window.confirm(`Delete "${style.name || 'Untitled style'}"? This can't be undone.`)) return false;
+    const res = await sendSafe({ type: 'st:delete-style', id: style.id });
+    if (!res?.ok) {
+        const message = res?.error || "Couldn't delete the style";
+        if (editor) setEditorStatus(message, true);
+        else showStyleNotice(message);
+        return false;
+    }
+    customStyles = customStyles.filter(s => s.id !== style.id);
+    renderStyleList();
+    return true;
+}
+
+function showStyleList(notice) {
+    closeEditor();
+    $('style-list-view').hidden = false;
+    showStyleNotice(notice);
+    renderStyleList();
+}
+
+function openStyleView(view) {
+    const [path, query = ''] = view.split('?');
+    if (!path) return showStyleList();
+    if (path === 'new') {
+        const site = new URLSearchParams(query).get('site') || '';
+        return showEditor(null, { name: site ? `${site} tweaks` : '', sites: site, css: '', replaceCatppuccin: false, enabled: true });
+    }
+    const id = decodeURIComponent(path);
+    const style = customStyles.find(s => s.id === id);
+    if (style) return showEditor(style.id, style);
+    if (!stylesLoaded) {
+        pendingStyleView = view;
+        $('style-list-view').hidden = true;
+        return undefined;
+    }
+    history.replaceState(null, '', '#my-styles');
+    currentHash = location.hash;
+    return showStyleList('That style no longer exists.');
+}
+
+// ─── Style editor ───
+function editorSnapshot() {
+    return JSON.stringify([$('editor-name').value, $('editor-sites').value, $('editor-css').value, $('editor-replace').checked]);
+}
+
+function editorDirty() {
+    return !!editor && editorSnapshot() !== editor.saved;
+}
+
+function confirmLeaveEditor() {
+    return !editorDirty() || window.confirm('Discard your unsaved changes to this style?');
+}
+
+function closeEditor() {
+    editor = null;
+    $('style-editor').hidden = true;
+}
+
+function fillEditor(style) {
+    const set = (id, value) => { if ($(id).value !== value) $(id).value = value; };
+    set('editor-name', style.name || '');
+    set('editor-sites', style.sites || '');
+    set('editor-css', style.css || '');
+    $('editor-replace').checked = !!style.replaceCatppuccin;
+}
+
+function showEditor(id, style) {
+    editor = { id, base: style, saved: '', saving: false };
+    $('style-list-view').hidden = true;
+    $('style-editor').hidden = false;
+    $('editor-title').textContent = id ? 'Edit style' : 'New style';
+    $('editor-delete').hidden = !id;
+    fillEditor(style);
+    editor.saved = editorSnapshot();
+    setEditorStatus('');
+    renderSitesFeedback();
+    renderBytes();
+    renderVarList();
+    (id || style.sites ? $('editor-css') : $('editor-name')).focus();
+}
+
+function setEditorStatus(text, danger = false) {
+    const status = $('editor-status');
+    status.textContent = text;
+    status.classList.toggle('st-danger', danger);
+}
+
+function renderSitesFeedback() {
+    const text = $('editor-sites').value;
+    const feedback = $('editor-sites-feedback');
+    const lines = styleLines(text);
+    const problems = customStylesApi
+        ? customStylesApi.sitesProblems(text)
+        : lines.filter(line => line !== '*' && STMatchers.parseSiteList(line).length === 0);
+    feedback.classList.toggle('st-danger', problems.length > 0);
+    if (problems.length) feedback.textContent = `Not recognised: ${problems.join(', ')}`;
+    else if (lines.includes('*')) feedback.textContent = 'All sites';
+    else if (lines.length) feedback.textContent = `Applies to ${lines.length} site${lines.length === 1 ? '' : 's'}`;
+    else feedback.textContent = 'Add at least one site, or * for every site.';
+}
+
+function cssBytes() {
+    return new TextEncoder().encode($('editor-css').value).length;
+}
+
+function renderBytes() {
+    const bytes = cssBytes();
+    const over = bytes > STYLE_LIMITS.maxCss;
+    $('editor-bytes').textContent = `${formatBytes(bytes)} of ${Math.round(STYLE_LIMITS.maxCss / 1024)} KB`;
+    $('editor-bytes').classList.toggle('st-danger', over);
+    $('editor-save').disabled = over || !!editor?.saving;
+}
+
+function varRow(name, value, swatchColour) {
+    const swatch = el('span', { class: 'var-swatch' });
+    if (swatchColour) swatch.style.background = swatchColour;
+    else swatch.hidden = true;
+    return el('li', {}, el('button', {
+        class: 'var-item', type: 'button', title: `Insert var(${name})`,
+        onclick: () => insertText($('editor-css'), `var(${name})`),
+    }, swatch, el('code', { text: name }), el('span', { class: 'var-value', text: value })));
+}
+
+function renderVarList() {
+    const roles = state?.palette?.roles || {};
+    const list = $('var-list');
+    clear(list);
+    for (const { name, role } of customStylesApi?.PALETTE_VARS || []) {
+        const value = roles[role];
+        if (typeof value === 'string' && HEX.test(value)) list.append(varRow(name, value, value));
+    }
+    if (!list.children.length) list.append(el('li', { class: 'field-hint', text: 'Shell colours appear once a palette is found.' }));
+
+    const ctp = $('ctp-var-list');
+    clear(ctp);
+    for (const { name, slot } of customStylesApi?.CATPPUCCIN_VARS || []) ctp.append(varRow(name, slot, null));
+}
+
+function insertText(textarea, text) {
+    textarea.focus();
+    // execCommand keeps the edit on the undo stack; setRangeText is the fallback.
+    let done = false;
+    try { done = document.execCommand('insertText', false, text); } catch { /* unsupported */ }
+    if (!done) {
+        textarea.setRangeText(text, textarea.selectionStart, textarea.selectionEnd, 'end');
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+}
+
+async function saveStyle() {
+    if (!editor || editor.saving || cssBytes() > STYLE_LIMITS.maxCss) return;
+    const sites = $('editor-sites').value;
+    const name = $('editor-name').value.trim() || styleLines(sites)[0] || 'Untitled style';
+    const style = {
+        ...editor.base,
+        name: name.slice(0, STYLE_LIMITS.maxName),
+        sites,
+        css: $('editor-css').value,
+        replaceCatppuccin: $('editor-replace').checked,
+    };
+    if (editor.id) style.id = editor.id;
+    else delete style.id;
+
+    const current = editor;
+    current.saving = true;
+    renderBytes();
+    setEditorStatus('Saving…');
+    const res = await sendSafe({ type: 'st:save-style', style });
+    current.saving = false;
+    if (editor !== current) return;
+    renderBytes();
+    if (!res?.ok || !res.style) {
+        setEditorStatus(res?.error || "Couldn't save the style", true);
+        return;
+    }
+
+    editor.id = res.style.id;
+    editor.base = res.style;
+    if ($('editor-name').value.trim() !== res.style.name && !$('editor-name').value.trim()) $('editor-name').value = res.style.name;
+    editor.saved = editorSnapshot();
+    const index = customStyles.findIndex(s => s.id === res.style.id);
+    if (index === -1) customStyles.push(res.style);
+    else customStyles[index] = res.style;
+
+    const hash = `#my-styles/${encodeURIComponent(res.style.id)}`;
+    if (location.hash !== hash) {
+        history.replaceState(null, '', hash);
+        currentHash = location.hash;
+    }
+    $('editor-title').textContent = 'Edit style';
+    $('editor-delete').hidden = false;
+    setEditorStatus('Saved');
+    setTimeout(() => { if (editor === current && $('editor-status').textContent === 'Saved') setEditorStatus(''); }, 2000);
+}
+
+// Keeps the list current and, when nothing is unsaved, the open editor too.
+function renderMyStyles() {
+    renderStyleList();
+    if (pendingStyleView !== null && stylesLoaded) {
+        const view = pendingStyleView;
+        pendingStyleView = null;
+        if (currentTab() === 'my-styles' && !editor) openStyleView(view);
+    }
+    if (!editor) return;
+    renderVarList();
+    if (!editor.id || editor.saving) return;
+    const latest = customStyles.find(s => s.id === editor.id);
+    if (!latest) {
+        if (editorDirty()) {
+            editor.id = null;
+            $('editor-delete').hidden = true;
+            setEditorStatus('This style was deleted elsewhere. Saving creates it again.', true);
+        } else {
+            history.replaceState(null, '', '#my-styles');
+            currentHash = location.hash;
+            showStyleList('That style was deleted.');
+        }
+    } else if (!editorDirty()) {
+        editor.base = latest;
+        fillEditor(latest);
+        editor.saved = editorSnapshot();
+        renderSitesFeedback();
+        renderBytes();
+    }
+}
+
+$('style-new').addEventListener('click', () => { location.hash = '#my-styles/new'; });
+$('editor-back').addEventListener('click', () => { location.hash = '#my-styles'; });
+$('editor-delete').addEventListener('click', async () => {
+    const style = editor && customStyles.find(s => s.id === editor.id);
+    if (!style || !(await deleteStyle(style))) return;
+    closeEditor();
+    location.hash = '#my-styles';
+});
+
+$('style-editor').addEventListener('submit', event => {
+    event.preventDefault();
+    saveStyle();
+});
+$('style-editor').addEventListener('keydown', event => {
+    if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        saveStyle();
+    }
+});
+$('style-editor').addEventListener('input', () => {
+    if (editor && !editor.saving) setEditorStatus(editorDirty() ? 'Unsaved changes' : '');
+});
+$('editor-replace').addEventListener('change', () => {
+    if (editor && !editor.saving) setEditorStatus(editorDirty() ? 'Unsaved changes' : '');
+});
+$('editor-sites').addEventListener('input', renderSitesFeedback);
+$('editor-css').addEventListener('input', renderBytes);
+$('editor-css').addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+        tabMovesFocus = true;
+        return;
+    }
+    if (event.key === 'Tab' && !event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey) {
+        if (tabMovesFocus) {
+            tabMovesFocus = false;
+            return;
+        }
+        event.preventDefault();
+        insertText(event.target, '  ');
+        return;
+    }
+    tabMovesFocus = false;
+});
+
+window.addEventListener('beforeunload', event => {
+    if (editorDirty()) event.preventDefault();
+});
+
 // ─── Maintenance ───
 async function runAction(button, result, busyText, message, describe) {
     const label = button.textContent;
@@ -465,6 +824,7 @@ function render() {
     renderStatus();
     renderSettings();
     renderMaintenance();
+    renderMyStyles();
 }
 
 async function refresh() {
@@ -474,6 +834,10 @@ async function refresh() {
         state = null;
     }
     if (state?.settings) settings = state.settings;
+    if (Array.isArray(state?.customStyles)) {
+        customStyles = state.customStyles;
+        stylesLoaded = true;
+    }
     render();
 }
 
@@ -487,4 +851,5 @@ browser.runtime.onMessage.addListener(message => {
 
 loadCachedPalette();
 renderPermission();
+route();
 refresh();

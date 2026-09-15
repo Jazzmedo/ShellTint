@@ -207,6 +207,17 @@ input[type="checkbox"][role="switch"]:disabled { opacity: 0.4; cursor: default; 
 }
 .st-input:focus { outline: none; border-color: var(--st-primary); }
 
+/* Code editor. */
+textarea.st-input.st-code {
+    min-height: 22rem;
+    font-size: 13px;
+    line-height: 1.55;
+    tab-size: 2;
+    white-space: pre;
+    overflow: auto;
+    resize: vertical;
+}
+
 /* Status dot: data-state="ok|warn|off". */
 .st-dot {
     display: inline-block;

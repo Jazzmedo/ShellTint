@@ -23,6 +23,7 @@
             <button class="tab" role="tab" id="tab-overview" aria-controls="overview" data-tab="overview">Overview</button>
             <button class="tab" role="tab" id="tab-colours" aria-controls="colours" data-tab="colours">Colours</button>
             <button class="tab" role="tab" id="tab-websites" aria-controls="websites" data-tab="websites">Websites</button>
+            <button class="tab" role="tab" id="tab-my-styles" aria-controls="my-styles" data-tab="my-styles">My styles</button>
             <button class="tab" role="tab" id="tab-maintenance" aria-controls="maintenance" data-tab="maintenance">Maintenance</button>
             <button class="tab" role="tab" id="tab-about" aria-controls="about" data-tab="about">About</button>
         </nav>
@@ -160,6 +161,72 @@
             </div>
         </section>
 
+        <!-- My styles -->
+        <section class="panel" id="my-styles" role="tabpanel" aria-labelledby="tab-my-styles" hidden>
+            <div class="styles-view" id="style-list-view">
+                <div class="styles-head">
+                    <p class="styles-intro">Your own CSS for any site, applied after the Catppuccin style. Use your shell colours with <code>var(--shelltint-primary)</code> and friends.</p>
+                    <button class="st-btn st-btn--primary" id="style-new" type="button">New style</button>
+                </div>
+                <p class="field-hint st-danger" id="style-notice" role="status" hidden></p>
+                <ul class="style-list" id="style-list"></ul>
+                <p class="field-hint" id="style-empty">No styles yet. Create one here, or from the toolbar button on the site you want to change.</p>
+            </div>
+
+            <form class="editor" id="style-editor" novalidate hidden>
+                <div class="editor-bar">
+                    <button class="st-btn st-btn--quiet" id="editor-back" type="button">← All styles</button>
+                    <span class="action-result" id="editor-status" role="status"></span>
+                </div>
+                <h2 class="st-heading" id="editor-title">New style</h2>
+
+                <div class="field">
+                    <label class="field-label" for="editor-name">Name</label>
+                    <input class="st-input" id="editor-name" type="text" maxlength="80" spellcheck="false" autocomplete="off" placeholder="YouTube tweaks">
+                </div>
+
+                <div class="field">
+                    <label class="field-label" for="editor-sites">Sites, one per line</label>
+                    <textarea class="st-input" id="editor-sites" rows="3" spellcheck="false" autocomplete="off" placeholder="youtube.com&#10;https://example.com/docs/&#10;* for every site"></textarea>
+                    <p class="field-hint" id="editor-sites-feedback">A hostname covers its subdomains; a full URL covers only that path.</p>
+                </div>
+
+                <div class="field">
+                    <div class="field-head">
+                        <label class="field-label" for="editor-css">CSS</label>
+                        <span class="field-hint" id="editor-bytes"></span>
+                    </div>
+                    <textarea class="st-input st-code" id="editor-css" spellcheck="false" autocomplete="off" wrap="off" placeholder="ytd-app {&#10;  background: var(--shelltint-surface);&#10;}"></textarea>
+                    <p class="field-hint">Tab indents · Esc then Tab leaves the editor · Ctrl+S saves</p>
+                </div>
+
+                <div class="rows">
+                    <label class="row">
+                        <span class="row-text">
+                            <span class="row-label">Turn off the Catppuccin style on these sites</span>
+                            <span class="row-hint">Only your CSS is applied where this style matches</span>
+                        </span>
+                        <input type="checkbox" role="switch" id="editor-replace">
+                    </label>
+                </div>
+
+                <details class="vars">
+                    <summary>Shell colours you can use</summary>
+                    <p class="field-hint vars-hint">Click one to insert it at the cursor.</p>
+                    <ul class="var-list" id="var-list"></ul>
+                    <h3 class="vars-subhead">Catppuccin colours</h3>
+                    <p class="field-hint">Available once website styles are built.</p>
+                    <ul class="var-list" id="ctp-var-list"></ul>
+                </details>
+
+                <div class="editor-actions">
+                    <button class="st-btn st-btn--primary" id="editor-save" type="submit">Save</button>
+                    <span class="spacer"></span>
+                    <button class="st-btn st-btn--quiet danger-btn" id="editor-delete" type="button" hidden>Delete style</button>
+                </div>
+            </form>
+        </section>
+
         <!-- Maintenance -->
         <section class="panel" id="maintenance" role="tabpanel" aria-labelledby="tab-maintenance" hidden>
             <h2 class="st-heading">Styles</h2>
@@ -195,6 +262,7 @@
 
     <script src="../shared/defaults.js"></script>
     <script src="../shared/matchers.js"></script>
+    <script src="../shared/custom-styles.js"></script>
     <script src="../shared/theme-map.js"></script>
     <script src="../shared/ui-kit.js"></script>
     <script src="options.js"></script>

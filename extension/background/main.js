@@ -23,8 +23,48 @@ async function updateSettings(patch) {
     return { ok: true, settings };
 }
 
+async function saveCustomStyles(styles) {
+    st.customStyles = STCustomStyles.normaliseStyles(styles);
+    await browser.storage.local.set({ customStyles: st.customStyles });
+    usRefreshAll();
+    broadcast('custom-styles');
+}
+
+async function saveStyle(raw) {
+    if (!raw || typeof raw !== 'object') return { ok: false, error: 'Nothing to save' };
+    const existing = st.customStyles.find(s => s.id === raw.id);
+    if (!existing && st.customStyles.length >= STCustomStyles.LIMITS.maxStyles) {
+        return { ok: false, error: `You can keep up to ${STCustomStyles.LIMITS.maxStyles} styles` };
+    }
+    if (String(raw.css || '').length > STCustomStyles.LIMITS.maxCss) {
+        return { ok: false, error: 'This style is larger than 256 KB' };
+    }
+    const now = Date.now();
+    const style = STCustomStyles.normaliseStyle({
+        ...raw,
+        id: existing ? existing.id : STCustomStyles.newStyleId(),
+        createdAt: existing ? existing.createdAt : now,
+        updatedAt: now,
+    });
+    const list = existing ? st.customStyles.map(s => (s.id === style.id ? style : s)) : [...st.customStyles, style];
+    await saveCustomStyles(list);
+    return { ok: true, style };
+}
+
+async function toggleStyle(id, enabled) {
+    if (!st.customStyles.some(s => s.id === id)) return { ok: false, error: 'That style no longer exists' };
+    await saveCustomStyles(st.customStyles.map(s => (s.id === id ? { ...s, enabled: !!enabled, updatedAt: Date.now() } : s)));
+    return { ok: true };
+}
+
+async function deleteStyle(id) {
+    await saveCustomStyles(st.customStyles.filter(s => s.id !== id));
+    return { ok: true };
+}
+
 function getState() {
     return {
+        customStyles: st.customStyles,
         settings: st.settings,
         host: st.host,
         palette: st.palette,
@@ -39,6 +79,9 @@ const PAGE_MESSAGES = {
     'st:get-state': () => getState(),
     'st:update-settings': message => updateSettings(message.patch),
     'st:site-state': message => usSiteState(String(message.url || '')),
+    'st:save-style': message => saveStyle(message.style),
+    'st:toggle-style': message => toggleStyle(message.id, message.enabled),
+    'st:delete-style': message => deleteStyle(message.id),
     'st:detect-sources': () => hostRequest({ type: 'ST_DETECT_SOURCES' }),
     'st:rebuild': message => hostRequest({ type: 'ST_REBUILD', force: !!message.force }),
     'st:check-updates': () => hostRequest({ type: 'ST_CHECK_UPDATES' }),
@@ -69,9 +112,10 @@ browser.runtime.onInstalled.addListener(details => {
     if (details.reason === 'install') browser.runtime.openOptionsPage().catch(() => { });
 });
 
-st.ready = browser.storage.local.get(['settings', 'lastPalette']).then(stored => {
+st.ready = browser.storage.local.get(['settings', 'lastPalette', 'customStyles']).then(stored => {
     st.storedSettings = !!stored.settings;
     st.settings = normaliseSettings(stored.settings);
+    st.customStyles = STCustomStyles.normaliseStyles(stored.customStyles);
     if (stored.lastPalette?.format === 1) st.palette = stored.lastPalette;
 }).catch(() => { });
 

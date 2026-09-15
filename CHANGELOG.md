@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.0 — 2026-09-15
+
+- My styles: write your own CSS for any site, like Stylus, from the settings page or the toolbar button. Styles can list hostnames, URL prefixes or `*`, use the shell's colours as `--shelltint-*` CSS variables, and optionally replace the Catppuccin style on their sites.
+- Website styles build with a quarter of the CPU cores at idle priority, so theme changes no longer saturate the CPU.
+
 ## 1.0.0 — 2026-09-15
 
 First ShellTint release.

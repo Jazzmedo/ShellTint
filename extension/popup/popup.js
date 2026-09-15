@@ -35,6 +35,7 @@ function renderSite() {
     $('site-host').title = site.host;
 
     if (!globalOn) $('site-style').textContent = 'Website styling is off everywhere';
+    else if (site.customStyles?.some(s => s.enabled && s.replaceCatppuccin)) $('site-style').textContent = 'Catppuccin style replaced by your style';
     else if (!site.built) $('site-style').textContent = 'Styles are still being built';
     else if (site.styles?.length) $('site-style').textContent = `Catppuccin style: ${site.styles.join(', ')}`;
     else $('site-style').textContent = 'No Catppuccin style for this site';
@@ -43,6 +44,45 @@ function renderSite() {
     siteSwitch.checked = globalOn && siteOn;
     siteSwitch.disabled = !globalOn;
     siteSwitch.title = siteOn ? `Pause styling on ${key}` : `Resume styling on ${key}`;
+}
+
+// Styles the user wrote that match this page, with a shortcut to write one.
+function renderMyStyles() {
+    const list = $('mystyles-list');
+    while (list.firstChild) list.firstChild.remove();
+    const themeable = !!(site?.themeable && site.host);
+    const mine = Array.isArray(site?.customStyles) ? site.customStyles : [];
+    $('mystyles').hidden = !themeable && !mine.length;
+    $('new-style').hidden = !themeable;
+    for (const style of mine) {
+        const name = style.name || 'Untitled style';
+        list.append(el('li', { class: 'mystyle-row' },
+            el('input', {
+                type: 'checkbox', role: 'switch', checked: !!style.enabled, 'aria-label': `${name} on or off`,
+                onchange: event => toggleStyle(style, event.target.checked),
+            }),
+            el('span', { class: 'mystyle-name', text: name, title: name }),
+            el('button', {
+                class: 'st-btn st-btn--quiet', type: 'button', text: 'Edit', 'aria-label': `Edit ${name}`,
+                onclick: () => openOptions(`#my-styles/${encodeURIComponent(style.id)}`),
+            })));
+    }
+}
+
+async function toggleStyle(style, enabled) {
+    style.enabled = enabled;
+    renderSite();
+    const res = await send({ type: 'st:toggle-style', id: style.id, enabled });
+    if (!res?.ok) style.enabled = !enabled;
+    renderSite();
+    renderMyStyles();
+}
+
+async function openOptions(hash) {
+    try {
+        await browser.tabs.create({ url: browser.runtime.getURL(`options/options.html${hash}`) });
+    } catch { /* the tab could not be opened */ }
+    window.close();
 }
 
 function renderSwitches() {
@@ -73,6 +113,7 @@ function renderStatus() {
 function render() {
     renderSwitches();
     renderSite();
+    renderMyStyles();
     renderStatus();
 }
 
@@ -97,6 +138,12 @@ $('site-switch').addEventListener('change', event => {
 for (const input of document.querySelectorAll('input[data-setting]')) {
     input.addEventListener('change', () => update({ [input.dataset.setting]: input.checked }));
 }
+
+$('new-style').addEventListener('click', () => {
+    if (!site?.host) return;
+    const key = site.siteKey || STMatchers.siteKey(site.host);
+    openOptions(`#my-styles/new?site=${encodeURIComponent(key)}`);
+});
 
 $('open-settings').addEventListener('click', () => {
     browser.runtime.openOptionsPage();

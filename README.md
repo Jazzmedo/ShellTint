@@ -168,6 +168,26 @@ Copy the matugen template above to `~/.config/noctalia/templates/shelltint.json`
 
 A paused site covers its subdomains: pausing `youtube.com` also pauses `m.youtube.com`.
 
+## My styles
+
+Write your own CSS for any site, like Stylus. Open ShellTint → My styles → New style, or click the toolbar button on a site and choose "New style for this site".
+
+- **Sites:** one per line. A hostname such as `example.com` covers its subdomains, a URL such as `https://example.com/forum/` covers only pages under it, and `*` means every site. Lines starting with `#` are comments.
+- **CSS:** plain CSS, applied after the Catppuccin style so your rules win ties. Use `!important` where a site's own CSS is more specific.
+- **Replace the Catppuccin style:** turn on "Turn off the Catppuccin style on these sites" to use only your CSS there.
+- **Shell colours:** every style can use the palette as variables, and pages update when the shell changes theme:
+
+  ```css
+  body {
+    background: var(--shelltint-surface) !important;
+    color: var(--shelltint-on-surface) !important;
+  }
+  a { color: var(--shelltint-primary) !important; }
+  ```
+
+  Material roles are `--shelltint-<role>` (`primary`, `on-primary`, `primary-container`, `secondary`, `tertiary`, `error`, `surface`, `on-surface`, `surface-container`, `surface-container-high`, `outline` and more). Once website styles are built, Catppuccin's recoloured slots are available too, as `--shelltint-ctp-<slot>` (`base`, `mantle`, `crust`, `text`, `mauve`, `blue` and so on). The editor lists them all with swatches.
+- Styles are stored in the extension and work even when the helper isn't running. Pausing a site or turning off website styling also turns off your styles there.
+
 ## Rebuilds
 
 - While the browser runs, the helper watches the active source's files. When they change and settle, it writes a new palette, recolours the toolbar and rebuilds the website styles in the background. Open tabs switch to the new styles without a reload.
