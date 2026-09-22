@@ -12,6 +12,9 @@ from .watcher import Debouncer, signature
 
 TICK = 0.25
 INDEX_EVERY = 1.0
+# Styles compiled per request, and never more than once each per generation:
+# a style that cannot compile must not be retried on every page load.
+MAX_ON_DEMAND = 12
 
 
 def log(text):
@@ -30,6 +33,8 @@ class Host:
         self.palette_error = None
         self.debouncer = Debouncer()
         self.index_key = None
+        self.compiling = set()
+        self.compiling_gen = None
         self.state_sig = None
         self.updater_started = False
         self.last_index_poll = 0.0
@@ -135,8 +140,12 @@ class Host:
         elif kind == "ST_GET_SITE_CSS":
             hashes = message.get("hashes")
             if isinstance(req_id, int) and isinstance(hashes, list):
+                missing = []
                 for reply in userstyles.site_css_messages(paths.userstyles_dir(), req_id, hashes):
                     self.send(reply)
+                    missing = reply.get("missing") or missing
+                if missing:
+                    self.compile_on_demand(missing)
 
         elif kind == "ST_DETECT_SOURCES":
             result = palette.detect(self.settings)
@@ -158,6 +167,29 @@ class Host:
 
         else:
             self.send({"type": "ST_ERROR", "reason": "unknown-message", "detail": str(kind)[:100]})
+
+    def compile_on_demand(self, hashes):
+        """Build the CSS for blocks a page asked for that were only indexed.
+
+        The builder leaves most styles uncompiled so a theme change costs a
+        second rather than eight; this fills one in the first time it is
+        needed. The page it was meant for stays unstyled until the build lands,
+        at which point the new index revision refreshes it.
+        """
+        index = userstyles.load_index(userstyles.index_key(paths.userstyles_dir()))
+        wanted = userstyles.styles_for_blocks(index, hashes)
+        gen = index.get("gen") if isinstance(index, dict) else None
+        with self.lock:
+            if gen != self.compiling_gen:
+                self.compiling_gen = gen
+                self.compiling = set()
+            fresh = [i for i in wanted if i not in self.compiling][:MAX_ON_DEMAND]
+            if not fresh:
+                return
+            self.compiling.update(fresh)
+        if not jobs.spawn("compile.sh", ",".join(fresh), log=log):
+            with self.lock:
+                self.compiling.difference_update(fresh)
 
     def ensure_styles(self):
         """Once per browser session: look for new Catppuccin styles, or build if nothing is built."""

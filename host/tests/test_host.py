@@ -78,6 +78,18 @@ class Userstyles(TempHome):
         self.assertEqual("".join(p["css"] for p in sorted(parts, key=lambda p: p["part"])), "x{color:red}" * 200000)
         self.assertEqual(userstyles.load_index(userstyles.index_key(root))["gen"], "3-3")
 
+    def test_styles_for_blocks_finds_the_styles_that_own_missing_blocks(self):
+        index = {"styles": [
+            {"id": "homepage", "blocks": [{"hash": "a" * 64}, {"hash": "b" * 64}]},
+            {"id": "reddit", "blocks": [{"hash": "c" * 64}]},
+            {"id": "broken"},
+            "not a style",
+        ]}
+        self.assertEqual(userstyles.styles_for_blocks(index, ["b" * 64]), ["homepage"])
+        self.assertEqual(userstyles.styles_for_blocks(index, ["a" * 64, "c" * 64]), ["homepage", "reddit"])
+        self.assertEqual(userstyles.styles_for_blocks(index, ["z" * 64]), [])
+        self.assertEqual(userstyles.styles_for_blocks(None, ["a" * 64]), [])
+
 
 class Watcher(unittest.TestCase):
     def test_debounce_waits_for_quiet_and_caps_bursts(self):
@@ -104,6 +116,20 @@ class Settings(TempHome):
         self.assertTrue(settings.save_mirror(clean))
         self.assertFalse(settings.save_mirror(clean))
         self.assertEqual(settings.load_mirror(), clean)
+
+    def test_self_hosted_instances_migrate_from_the_searxng_only_setting(self):
+        legacy = settings.normalise({"searxngInstances": ["searxng.home.internal", 3, " "]})
+        self.assertEqual(legacy["siteInstances"], {"searxng": ["searxng.home.internal"]})
+        self.assertNotIn("searxngInstances", legacy)
+
+        fresh = settings.normalise({"siteInstances": {"homepage": ["homepage.home.internal"], "evil": ["x"]}})
+        self.assertEqual(fresh["siteInstances"], {"homepage": ["homepage.home.internal"]})
+
+        # The new shape wins once it has been written.
+        both = settings.normalise({"searxngInstances": ["old.example"],
+                                   "siteInstances": {"searxng": ["new.example"]}})
+        self.assertEqual(both["siteInstances"], {"searxng": ["new.example"]})
+        self.assertEqual(settings.normalise({})["siteInstances"], {})
 
     def test_matches_extension_defaults(self):
         text = (paths.install_dir() / "extension" / "shared" / "defaults.js").read_text()
@@ -163,6 +189,24 @@ class HostMessages(TempHome):
         self.assertIn(("update.sh", ("--now",)), self.spawned)
         self.host.handle({"type": "NOPE"})
         self.assertEqual(self.channel.of("ST_ERROR")[-1]["reason"], "unknown-message")
+
+    def test_a_missing_block_is_compiled_once_per_generation(self):
+        root = paths.userstyles_dir() / "gen-9-9"
+        (root / "blocks").mkdir(parents=True)
+        index = {"format": 1, "gen": "9-9", "styles": [
+            {"id": "homepage", "blocks": [{"hash": "a" * 64, "pending": True}]},
+        ]}
+        (root / "index.json").write_text(json.dumps(index))
+        (paths.userstyles_dir() / "current").symlink_to("gen-9-9")
+
+        self.host.handle({"type": "ST_GET_SITE_CSS", "reqId": 8, "hashes": ["a" * 64]})
+        self.assertEqual(self.channel.of("ST_SITE_CSS")[-1]["missing"], ["a" * 64])
+        self.assertIn(("compile.sh", ("homepage",)), self.spawned)
+
+        # Asking again must not queue the same build twice.
+        self.spawned.clear()
+        self.host.handle({"type": "ST_GET_SITE_CSS", "reqId": 9, "hashes": ["a" * 64]})
+        self.assertEqual(self.spawned, [])
 
     def test_hello_carries_mirror_and_paths(self):
         settings.save_mirror({"paletteSource": "end4"})

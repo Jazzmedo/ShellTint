@@ -1,0 +1,89 @@
+/* Homepage (gethomepage.dev) — sit on the shell's own colours.
+ *
+ * Homepage paints the page with `html { background-color: rgb(var(--bg-color)) }`,
+ * where --bg-color is an "r g b" triplet. The Catppuccin style puts a hex colour
+ * there, which makes the rgb() invalid, so it is dropped and Homepage's stock
+ * slate shows through under the themed cards. Setting the colour directly
+ * sidesteps the triplet entirely.
+ */
+
+html,
+body {
+    background-color: var(--shelltint-background) !important;
+}
+
+/* Cards, bookmarks and their icon tiles: one step above the page, so they read
+   as raised without a border. */
+.service-card,
+.bookmark-text,
+.bookmark-icon,
+#information-widgets .dark\:bg-white\/10,
+input[class*="dark:bg-theme-800"] {
+    background-color: var(--shelltint-surface-container) !important;
+}
+
+.service-card:hover,
+a:hover .bookmark-text,
+a:hover .bookmark-icon {
+    background-color: var(--shelltint-surface-container-high) !important;
+}
+
+/* Boxes inside a card — Adguard's counters, Jellyfin's stats, ping and Docker
+   readouts — go one step lower so they recede into the card. */
+.service-card .dark\:bg-theme-900\/50,
+.service-block .dark\:bg-theme-900\/50,
+.service-card .dark\:bg-white\/5 {
+    background-color: var(--shelltint-surface-container-low) !important;
+}
+
+/* Text */
+.service-group-name,
+.bookmark-group-name {
+    color: var(--shelltint-on-surface) !important;
+}
+
+.service-card,
+.bookmark-name,
+#information-widgets {
+    color: var(--shelltint-on-surface) !important;
+}
+
+.bookmark-description,
+.service-description,
+.service-card .text-theme-500 {
+    color: var(--shelltint-on-surface-variant) !important;
+}
+
+/* The rule under the widget bar, and the search field's edge. */
+#information-widgets {
+    border-color: var(--shelltint-surface-container-high) !important;
+}
+
+.border-theme-300,
+input[class*="border-slate-700"] {
+    border-color: var(--shelltint-surface-container-high) !important;
+}
+
+input[class*="dark:bg-theme-800"]::placeholder {
+    color: var(--shelltint-on-surface-variant) !important;
+}
+
+/* Accent: the shell's primary, for progress bars and focus. */
+#information-widgets .dark\:bg-theme-200\/50 {
+    background-color: var(--shelltint-primary) !important;
+}
+
+#information-widgets .dark\:bg-theme-200\/20 {
+    background-color: var(--shelltint-surface-container-high) !important;
+}
+
+input:focus {
+    --tw-ring-color: var(--shelltint-primary) !important;
+    border-color: var(--shelltint-primary) !important;
+}
+
+/* Scrollbar, which Homepage drives from its own variables. */
+html {
+    --scrollbar-thumb: var(--shelltint-surface-container-high);
+    --scrollbar-track: var(--shelltint-background);
+}

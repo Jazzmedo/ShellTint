@@ -13,7 +13,7 @@ Limits:
 | --- | --- | --- |
 | `ST_SETTINGS` | `{settings}` | Update the settings mirror (`~/.config/shelltint/settings.json`). Re-resolve the palette if source, path or mode changed. Start the Catppuccin update check once per connection when website styling is on. |
 | `ST_SYNC` | `{}` | Send `ST_PALETTE`, `ST_STYLES_INDEX` and `ST_STATUS` now. |
-| `ST_GET_SITE_CSS` | `{reqId, hashes}` (≤ 1000 hashes) | Reply with one or more `ST_SITE_CSS`. |
+| `ST_GET_SITE_CSS` | `{reqId, hashes}` (≤ 1000 hashes) | Reply with one or more `ST_SITE_CSS`. Blocks that were only indexed are compiled in the background (see [Blocks](#blocks)). |
 | `ST_DETECT_SOURCES` | `{reqId}` | Reply with `ST_SOURCES`. |
 | `ST_REBUILD` | `{reqId, force}` | Start a style rebuild; reply with `ST_ACTION_RESULT`. |
 | `ST_CHECK_UPDATES` | `{reqId}` | Check Catppuccin for new styles now; reply with `ST_ACTION_RESULT`. |
@@ -32,6 +32,32 @@ Limits:
 | `ST_ERROR` | `{reason, detail}` |
 
 If `protocol` in `ST_HELLO` does not match, the extension reports that the helper needs updating.
+
+## Blocks
+
+A block is one `@-moz-document` section of a compiled userstyle, named by
+
+    sha256("<paletteHash>:<styleId>:<blockIndex>")
+
+and served from `<generation>/blocks/<hash>.css`. The name is derived from what
+decides the block's content rather than from the content itself, so the index
+can be published before anything is compiled.
+
+The builder uses that to compile only the styles this browser has actually used
+(plus any whose sites only the LESS compiler can work out). Every other style is
+listed in `index.json` with its matchers and `"pending": true` on its blocks, and
+no file on disk.
+
+When a page asks for a pending block, the helper answers with it in `missing`,
+then runs `builder/scripts/compile.sh` for the style that owns it — once per
+style per generation. The finished CSS lands at exactly the hash the index
+promised, `index.rev` is incremented, and the extension picks the new revision up
+on its next index poll and styles the open pages. A page that needs a block for
+the first time therefore appears unstyled for a moment.
+
+`index.rev` starts at `0` and only ever increases within a generation; a new
+generation resets it. The extension treats `gen` **and** `rev` as the identity of
+an index.
 
 ## Inside the extension
 

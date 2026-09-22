@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { splitCompiled, cssUnescape } from '../split.mjs';
+import { splitCompiled, cssUnescape, parseSourceBlocks, sourceIsStatic } from '../split.mjs';
 
 test('each @-moz-document becomes a block with its matchers', () => {
   const { blocks, warnings } = splitCompiled(`
@@ -46,4 +46,49 @@ test('cssUnescape handles escaped characters and hex escapes', () => {
   assert.equal(cssUnescape('a\\\\b'), 'a\\b');
   assert.equal(cssUnescape('say \\"hi\\"'), 'say "hi"');
   assert.equal(cssUnescape('\\2f x'), '/x');
+});
+
+test('matchers are read from source, so a style can be indexed before it compiles', () => {
+  const blocks = parseSourceBlocks(`
+@stylus-var: 1;
+@-moz-document domain("youtube.com"), url-prefix("https://studio.youtube.com") {
+  :root { color: @stylus-var; }
+}
+@-moz-document /* a note */ url("https://example.com/one") {
+  body { color: red; }
+}`);
+  assert.equal(blocks.length, 2);
+  assert.ok(sourceIsStatic(blocks));
+  assert.deepEqual(blocks[0].matchers, [
+    { t: 'domain', v: 'youtube.com' },
+    { t: 'url-prefix', v: 'https://studio.youtube.com' },
+  ]);
+  assert.deepEqual(blocks[1].matchers, [{ t: 'url', v: 'https://example.com/one' }]);
+});
+
+test('a brace inside a regexp does not end the prelude', () => {
+  const blocks = parseSourceBlocks(`
+@-moz-document regexp("^https?://(www|[a-z]{2}).pinterest.com/.*") {
+  body { color: red; }
+}`);
+  assert.equal(blocks.length, 1);
+  assert.ok(sourceIsStatic(blocks));
+  assert.deepEqual(blocks[0].matchers, [{ t: 'regexp', v: '^https?://(www|[a-z]{2}).pinterest.com/.*' }]);
+});
+
+test('a prelude built by LESS is reported as non-static, so it must be compiled', () => {
+  const blocks = parseSourceBlocks(`
+@urls: "127.0.0.1:8384, localhost:8384";
+@-moz-document regexp(
+    replace(replace(%("https?://(%s)/.*", @urls), ",", "|", "g"), " ", "", "g")
+  ) {
+  body { color: red; }
+}`);
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0].static, false);
+  assert.equal(sourceIsStatic(blocks), false);
+});
+
+test('a style with no @-moz-document is not static, so it is never indexed blind', () => {
+  assert.equal(sourceIsStatic(parseSourceBlocks('body { color: red; }')), false);
 });

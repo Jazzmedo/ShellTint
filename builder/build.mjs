@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 
 import { SLOTS, buildSlots } from './palette.mjs';
 import { solveFilter } from './filter-solver.mjs';
-import { splitCompiled } from './split.mjs';
+import { splitCompiled, parseSourceBlocks, sourceIsStatic } from './split.mjs';
 
 const BUILDER_VERSION = 2;
 const KEEP_GENERATIONS = 3;
@@ -54,6 +54,9 @@ function parseArgs(argv) {
     bundle: process.env.SHELLTINT_BUNDLE || path.join(CACHE, 'catppuccin'),
     palette: path.join(CACHE, 'palette.json'),
     vars: path.join(CONFIG, 'userstyle-vars.json'),
+    // Compile these styles into an existing generation, instead of building one.
+    compile: null,
+    gen: null,
   };
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
@@ -70,6 +73,8 @@ function parseArgs(argv) {
       case '--bundle': args.bundle = value(); break;
       case '--palette': args.palette = value(); break;
       case '--vars': args.vars = value(); break;
+      case '--compile': args.compile = new Set(value().split(',').filter(Boolean)); break;
+      case '--gen': args.gen = value(); break;
       default: throw new Error(`unknown argument: ${flag}`);
     }
   }
@@ -173,6 +178,39 @@ function prepareSource(entry, stdPath, flavor, overrides) {
 const slugify = name =>
   name.replace(/\s*Catppuccin\s*$/i, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'style';
 
+// A block's name, computable before it is compiled. It used to be the hash of
+// the compiled CSS, which meant the index could not exist until every style had
+// been compiled; naming a block after what determines its content instead lets
+// the index be published first and the CSS made only for sites actually opened.
+const blockHash = (paletteHash, id, i) => sha256(`${paletteHash}:${id}:${i}`);
+
+// Styles compiled in the previous generation: the sites this browser really
+// visits. They are compiled up front so a theme change is not felt as a stall.
+function warmStyles(outDir) {
+  try {
+    const index = readJson(path.join(outDir, 'current/index.json'));
+    return new Set(index.styles.filter(s => s.blocks?.some(b => !b.pending)).map(s => s.id));
+  } catch {
+    return new Set();
+  }
+}
+
+// Walks the bundle the way a build does, so ids match across invocations.
+function bundleStyles(bundleText) {
+  const ids = new Map();
+  const out = [];
+  for (const entry of JSON.parse(bundleText)) {
+    if (!entry || typeof entry.sourceCode !== 'string') continue;
+    const name = entry.usercssData?.name ?? entry.name ?? 'Unnamed';
+    let id = slugify(name);
+    const count = (ids.get(id) ?? 0) + 1;
+    ids.set(id, count);
+    if (count > 1) id = `${id}-${count}`;
+    out.push({ id, name, entry });
+  }
+  return out;
+}
+
 function compileAll(jobs, tasks) {
   return new Promise(resolve => {
     const results = new Map();
@@ -226,10 +264,103 @@ function prune(outDir, keep) {
   }
 }
 
+// ─── Compiling into a published generation ───
+// The helper calls this when a page needs a block that was only indexed. The
+// generation already holds the palette library it was published with, so the
+// CSS produced here is exactly what a full build would have produced.
+function compileInto(args) {
+  const genDir = args.gen ? path.join(args.out, `gen-${args.gen}`) : path.join(args.out, 'current');
+  const indexFile = path.join(genDir, 'index.json');
+  const index = readJson(indexFile);
+  if (index.format !== 1) throw new Error(`${indexFile} is not a format 1 index`);
+  const stdPath = path.join(genDir, 'palette-std.less');
+  if (!fs.existsSync(stdPath)) throw new Error(`${genDir} has no palette library; rebuild instead`);
+
+  const wanted = new Set([...args.compile].filter(id => index.styles.some(s => s.id === id)));
+  if (!wanted.size) {
+    log(`nothing to compile on demand in gen-${index.gen}`);
+    return 0;
+  }
+  let overrides = {};
+  try { overrides = readJson(args.vars); } catch { /* optional */ }
+
+  const bundleText = fs.readFileSync(path.join(args.bundle, 'import.json'), 'utf8');
+  const tasks = [];
+  const tmpDir = fs.mkdtempSync(path.join(args.out, '.tmp-compile-'));
+  try {
+    for (const { id, name, entry } of bundleStyles(bundleText)) {
+      if (!wanted.has(id)) continue;
+      const prepared = prepareSource(entry, stdPath, index.flavor, overrides[id] ?? {});
+      if (prepared.error) {
+        log(`on demand ${id}: ${prepared.error}`);
+        continue;
+      }
+      tasks.push({ id, name, source: prepared.source, filename: path.join(tmpDir, `${id}.user.less`) });
+    }
+    return finishCompileInto(args, index, indexFile, genDir, tasks);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+}
+
+async function finishCompileInto(args, index, indexFile, genDir, tasks) {
+  const started = performance.now();
+  const results = await compileAll(args.jobs, tasks);
+  const blocksDir = path.join(genDir, 'blocks');
+  fs.mkdirSync(blocksDir, { recursive: true });
+  const done = [];
+  const broke = [];
+  // A style that only fails when it is finally compiled would otherwise never
+  // reach the options page, which lists what failed to build.
+  const fail = (task, error) => {
+    log(`on demand ${task.id}: ${error}`);
+    broke.push({ id: task.id, name: task.name, error });
+  };
+  for (const task of tasks) {
+    const result = results.get(task.id);
+    if (!result || result.error) {
+      fail(task, result?.error ?? 'no result from the compiler');
+      continue;
+    }
+    let split;
+    try {
+      split = splitCompiled(result.css);
+    } catch (err) {
+      fail(task, `split: ${err.message}`);
+      continue;
+    }
+    const entry = index.styles.find(s => s.id === task.id);
+    // The index promised a set of blocks; honouring it is what makes the hash
+    // in a page's request resolvable. A style whose compiled shape disagrees
+    // with its source is left alone rather than published half-right.
+    if (split.blocks.length !== entry.blocks.length) {
+      fail(task, `${split.blocks.length} blocks compiled, but the index promised ${entry.blocks.length}`);
+      continue;
+    }
+    split.blocks.forEach((block, i) => {
+      const { hash } = entry.blocks[i];
+      writeFileAtomic(path.join(blocksDir, `${hash}.css`), block.css);
+      entry.blocks[i] = { hash, bytes: block.bytes, matchers: entry.blocks[i].matchers };
+    });
+    done.push(task.id);
+  }
+  if (broke.length) {
+    const failed = (index.stats?.failed ?? []).filter(f => !broke.some(b => b.id === f.id));
+    index.stats = { ...index.stats, failed: [...failed, ...broke] };
+  }
+  if (!done.length && !broke.length) return 1;
+  index.rev = (index.rev ?? 0) + 1;
+  writeFileAtomic(indexFile, JSON.stringify(index));
+  if (!done.length) return 1;
+  log(`compiled on demand into gen-${index.gen}: ${done.join(', ')} (${Math.round(performance.now() - started)} ms)`);
+  return 0;
+}
+
 async function main() {
   const started = performance.now();
   const args = parseArgs(process.argv.slice(2));
   fs.mkdirSync(args.out, { recursive: true });
+  if (args.compile) return compileInto(args);
 
   const palette = loadPalette(args.palette);
   const mode = args.mode ?? palette.mode;
@@ -265,17 +396,12 @@ async function main() {
   const stdPath = path.join(tmpDir, 'palette-std.less');
   fs.writeFileSync(stdPath, makeStdLib(stdText, flavor, slots, filters));
 
-  const entries = JSON.parse(bundleText).filter(entry => entry && typeof entry.sourceCode === 'string');
+  const entries = bundleStyles(bundleText);
+  const warm = warmStyles(args.out);
   const styles = [];
   const failed = [];
   const tasks = [];
-  const ids = new Map();
-  for (const entry of entries) {
-    const name = entry.usercssData?.name ?? entry.name ?? 'Unnamed';
-    let id = slugify(name);
-    const count = (ids.get(id) ?? 0) + 1;
-    ids.set(id, count);
-    if (count > 1) id = `${id}-${count}`;
+  for (const { id, name, entry } of entries) {
     if (args.only && !args.only.has(id)) continue;
 
     const prepared = prepareSource(entry, stdPath, flavor, overrides[id] ?? {});
@@ -283,8 +409,13 @@ async function main() {
       failed.push({ id, name, error: prepared.error });
       continue;
     }
-    styles.push({ id, name });
-    tasks.push({ id, source: prepared.source, filename: path.join(tmpDir, `${id}.user.less`) });
+    // Where a style applies is nearly always literal in its source. When it is,
+    // the style can be indexed now and compiled only if the user opens one of
+    // its sites; when it is not, only the compiler knows, so it must run.
+    const source = parseSourceBlocks(prepared.source);
+    const lazy = sourceIsStatic(source) && !warm.has(id) && !PRIORITY.includes(id);
+    styles.push({ id, name, source, lazy });
+    if (!lazy) tasks.push({ id, source: prepared.source, filename: path.join(tmpDir, `${id}.user.less`) });
   }
   const rank = id => (PRIORITY.includes(id) ? PRIORITY.indexOf(id) : PRIORITY.length);
   tasks.sort((a, b) => rank(a.id) - rank(b.id));
@@ -297,34 +428,50 @@ async function main() {
   let bytes = 0;
   // Bundle order, not compile order: it decides injection order when several
   // styles match one page.
+  let lazyCount = 0;
   for (const style of styles) {
-    const result = results.get(style.id);
+    const { id, name } = style;
+    if (style.lazy) {
+      // Indexed from its source; the CSS is compiled the first time one of its
+      // sites is opened, and lands at exactly these names.
+      published.push({
+        id,
+        name,
+        blocks: style.source.map((block, i) => ({
+          hash: blockHash(paletteHash, id, i), bytes: 0, matchers: block.matchers, pending: true,
+        })),
+      });
+      lazyCount++;
+      continue;
+    }
+    const result = results.get(id);
     if (!result || result.error) {
-      failed.push({ ...style, error: result?.error ?? 'no result from the compiler' });
+      failed.push({ id, name, error: result?.error ?? 'no result from the compiler' });
       continue;
     }
     let split;
     try {
       split = splitCompiled(result.css);
     } catch (err) {
-      failed.push({ ...style, error: `split: ${err.message}` });
+      failed.push({ id, name, error: `split: ${err.message}` });
       continue;
     }
     if (!split.blocks.length) {
-      failed.push({ ...style, error: 'no site blocks after compiling' });
+      failed.push({ id, name, error: 'no site blocks after compiling' });
       continue;
     }
-    for (const warning of split.warnings) warnings.push(`${style.id}: ${warning}`);
-    for (const block of split.blocks) {
+    for (const warning of split.warnings) warnings.push(`${id}: ${warning}`);
+    const blocks = split.blocks.map((block, i) => ({ ...block, hash: blockHash(paletteHash, id, i) }));
+    for (const block of blocks) {
       if (written.has(block.hash)) continue;
       fs.writeFileSync(path.join(blocksDir, `${block.hash}.css`), block.css);
       written.add(block.hash);
       bytes += block.bytes;
     }
     published.push({
-      id: style.id,
-      name: style.name,
-      blocks: split.blocks.map(({ hash, bytes: size, matchers }) => ({ hash, bytes: size, matchers })),
+      id,
+      name,
+      blocks: blocks.map(({ hash, bytes: size, matchers }) => ({ hash, bytes: size, matchers })),
     });
   }
 
@@ -337,6 +484,9 @@ async function main() {
   const index = {
     format: 1,
     gen,
+    // Bumped when blocks are compiled into this generation on demand, so the
+    // extension notices the new CSS without the generation itself changing.
+    rev: 0,
     paletteHash,
     createdAt: Date.now() / 1000,
     mode,
@@ -350,6 +500,8 @@ async function main() {
       failed,
       warnings,
       bytes,
+      compiled: published.length - lazyCount,
+      lazy: lazyCount,
       ms: Math.round(performance.now() - started),
     },
     styles: published,
@@ -364,7 +516,8 @@ async function main() {
   fs.renameSync(tmpLink, link);
   prune(args.out, gen);
 
-  log(`published gen-${gen}: ${published.length}/${entries.length} styles, ${failed.length} failed, ` +
+  log(`published gen-${gen}: ${published.length}/${entries.length} styles ` +
+    `(${published.length - lazyCount} compiled, ${lazyCount} on demand), ${failed.length} failed, ` +
     `${(bytes / 1048576).toFixed(1)} MiB, ${index.stats.ms} ms (${sourceId ?? 'palette'}, ${mode}, accent ${slots.mauve})`);
   for (const f of failed) log(`  failed ${f.id}: ${f.error}`);
   return 0;

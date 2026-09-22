@@ -3,7 +3,7 @@
 'use strict';
 
 const THEME_KEYS = ['toolbarTheming', 'toolbarStyle'];
-const PAGE_KEYS = ['websiteStyling', 'disabledSites', 'searxngInstances'];
+const PAGE_KEYS = ['websiteStyling', 'disabledSites', 'siteInstances'];
 
 async function saveSettings(next) {
     const before = st.settings;

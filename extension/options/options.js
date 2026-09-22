@@ -346,10 +346,11 @@ function renderWebsites() {
     $('paused-empty').hidden = sites.length > 0;
     $('paused-clear').hidden = sites.length === 0;
 
-    const textarea = $('searxng');
-    if (document.activeElement !== textarea) {
-        textarea.value = (settings.searxngInstances || []).join('\n');
-        renderSearxngFeedback();
+    for (const site of SELF_HOSTED_SITES) {
+        const textarea = $(`instances-${site.id}`);
+        if (document.activeElement === textarea) continue;
+        textarea.value = (settings.siteInstances?.[site.id] || []).join('\n');
+        renderInstanceFeedback(site);
     }
 
     const failed = state?.styles?.failed || [];
@@ -365,33 +366,60 @@ function renderWebsites() {
 
 $('paused-clear').addEventListener('click', () => update({ disabledSites: [] }));
 
-function renderSearxngFeedback() {
-    const feedback = $('searxng-feedback');
-    const lines = $('searxng').value.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+// One row per self-hosted style, built from the shared list so adding a site
+// there is the only change needed.
+function instanceRow(site) {
+    const id = `instances-${site.id}`;
+    const row = el('div', { class: 'field' },
+        el('label', { class: 'field-label', for: id, text: `${site.label} — one address per line` }),
+        el('textarea', {
+            class: 'st-input', id, rows: '3', spellcheck: 'false', autocomplete: 'off',
+            placeholder: site.placeholder,
+        }),
+        el('p', { class: 'field-hint', id: `${id}-feedback`, text: INSTANCE_HINT }));
+    return row;
+}
+
+const INSTANCE_HINT = 'A hostname, or a full URL to style only that path.';
+const SELF_HOSTED_SITES = globalThis.SELF_HOSTED_SITES || [];
+$('instances').append(...SELF_HOSTED_SITES.map(instanceRow));
+
+function renderInstanceFeedback(site) {
+    const feedback = $(`instances-${site.id}-feedback`);
+    const lines = $(`instances-${site.id}`).value.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
     const bad = lines.filter(line => STMatchers.parseSiteList(line).length === 0);
     feedback.classList.toggle('st-danger', bad.length > 0);
     if (bad.length) {
         feedback.textContent = `Not recognised: ${bad.join(', ')}`;
     } else if (lines.length) {
         const count = STMatchers.parseSiteList(lines.join('\n')).length;
-        feedback.textContent = `${count} instance${count === 1 ? '' : 's'} recognised`;
+        feedback.textContent = `${count} address${count === 1 ? '' : 'es'} recognised`;
     } else {
-        feedback.textContent = 'A hostname, or a full URL to style only that path.';
+        feedback.textContent = INSTANCE_HINT;
     }
 }
 
-let searxngTimer = null;
-function saveSearxng() {
-    clearTimeout(searxngTimer);
-    const lines = $('searxng').value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-    if (JSON.stringify(lines) !== JSON.stringify(settings.searxngInstances || [])) update({ searxngInstances: lines });
+const instanceTimers = new Map();
+function saveInstances(site) {
+    clearTimeout(instanceTimers.get(site.id));
+    const lines = $(`instances-${site.id}`).value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const current = settings.siteInstances?.[site.id] || [];
+    if (JSON.stringify(lines) === JSON.stringify(current)) return;
+    const next = { ...(settings.siteInstances || {}) };
+    if (lines.length) next[site.id] = lines;
+    else delete next[site.id];
+    update({ siteInstances: next });
 }
-$('searxng').addEventListener('input', () => {
-    renderSearxngFeedback();
-    clearTimeout(searxngTimer);
-    searxngTimer = setTimeout(saveSearxng, 400);
-});
-$('searxng').addEventListener('blur', saveSearxng);
+
+for (const site of SELF_HOSTED_SITES) {
+    const textarea = $(`instances-${site.id}`);
+    textarea.addEventListener('input', () => {
+        renderInstanceFeedback(site);
+        clearTimeout(instanceTimers.get(site.id));
+        instanceTimers.set(site.id, setTimeout(() => saveInstances(site), 400));
+    });
+    textarea.addEventListener('blur', () => saveInstances(site));
+}
 
 // ─── My styles ───
 const customStylesApi = globalThis.STCustomStyles || null;

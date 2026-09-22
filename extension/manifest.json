@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ShellTint",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Colours the browser and 130+ websites with your Linux desktop shell's palette: DankMaterialShell, Caelestia, Noctalia, end-4 or any matugen output.",
   "author": "Jazzmedo",
   "homepage_url": "https://github.com/Jazzmedo/ShellTint",

@@ -54,6 +54,27 @@ def find_block(root, block_hash):
     return None
 
 
+def styles_for_blocks(index, hashes):
+    """Style ids owning these blocks, for blocks the builder only indexed.
+
+    A full build compiles just the styles this browser has used; the rest carry
+    their sites but no CSS until a page asks for one.
+    """
+    if not isinstance(index, dict):
+        return []
+    wanted = {h for h in hashes if isinstance(h, str)}
+    out = []
+    for style in index.get("styles") or []:
+        if not isinstance(style, dict):
+            continue
+        blocks = style.get("blocks") or []
+        if any(isinstance(b, dict) and b.get("hash") in wanted for b in blocks):
+            style_id = style.get("id")
+            if isinstance(style_id, str) and style_id not in out:
+                out.append(style_id)
+    return out
+
+
 def site_css_messages(root, req_id, hashes):
     """ST_SITE_CSS messages answering one request; the last is marked final."""
     piece_limit = SITE_CSS_BUDGET - 4096

@@ -7,10 +7,10 @@ ShellTint has two parts: the browser extension, and a small local helper (a nati
 ## Features
 
 - Toolbar, tabs, address bar and menus take the shell's colours (tonal or vivid style).
-- Catppuccin userstyles for 130+ sites, recompiled with your palette on every theme change.
+- Catppuccin userstyles for 130+ sites, recompiled with your palette on every theme change — only the ones you actually visit, so a theme change costs about a second.
 - Light and dark follow the shell, or can be forced.
-- Pause styling per site from the toolbar popup, or turn it off everywhere.
-- Style your own SearXNG instances.
+- Pause styling per site from the toolbar popup, or turn it off everywhere; the button counts the styles in use.
+- Style your own self-hosted SearXNG, Homepage, boringproxy and OpenMediaVault.
 - Detects the shell automatically; any matugen output works as a fallback.
 - Collects no data.
 
@@ -163,10 +163,34 @@ Copy the matugen template above to `~/.config/noctalia/templates/shelltint.json`
 | `toolbarStyle` | `tonal`, `vivid` | `tonal` | Colours |
 | `websiteStyling` | on / off | on | Overview, Websites, popup |
 | `disabledSites` | site list | empty | popup; managed under Websites → Paused sites |
-| `searxngInstances` | one hostname or URL per line | empty | Websites |
+| `siteInstances` | site id → one hostname or URL per line | empty | Websites → Self-hosted sites |
 | `autoCheckUpdates` | on / off | on | Maintenance |
 
 A paused site covers its subdomains: pausing `youtube.com` also pauses `m.youtube.com`.
+
+### Self-hosted sites
+
+Four Catppuccin styles are written for software you host yourself, so upstream
+can only name a placeholder address (`homepage.example.com`). Put your own
+address under **Websites → Self-hosted sites** and that style starts applying:
+
+| Style | Notes |
+| --- | --- |
+| SearXNG | |
+| Homepage | Already matches any host starting `homepage.`, e.g. `homepage.home.local`. |
+| boringproxy | |
+| OpenMediaVault | |
+
+A line is a hostname (subdomains included) or a full URL to style only that
+path. To change how one of them looks, write your own CSS for it under **My
+styles**.
+
+Homepage needs one extra piece. It paints the page with
+`html { background-color: rgb(var(--bg-color)) }`, an `r g b` triplet, and the
+Catppuccin style puts a hex colour there — an invalid `rgb()`, which the browser
+drops, leaving Homepage's stock slate behind the themed cards. Paste
+[`docs/styles/homepage.css`](docs/styles/homepage.css) into a new style under
+**My styles** to set the colour directly and match the rest of the desktop.
 
 ## My styles
 

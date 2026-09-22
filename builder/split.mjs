@@ -90,3 +90,57 @@ export function splitCompiled(css) {
   });
   return { blocks, warnings };
 }
+
+// ─── Reading matchers without compiling ───
+// A style's sites are almost always literal in its source, so the index can be
+// published before any LESS runs and the CSS compiled only for sites actually
+// visited. A handful of styles build their prelude with LESS instead
+// (`regexp(replace(%("...", @urls), …))`); those are reported as non-static and
+// must still be compiled to learn where they apply.
+
+// The prelude ends at the first `{` outside a string or comment — a regexp
+// matcher such as `[a-z]{2}` contains braces of its own.
+function preludeEnd(css, from) {
+  let quote = null;
+  for (let i = from; i < css.length; i++) {
+    const ch = css[i];
+    if (quote) {
+      if (ch === '\\') i++;
+      else if (ch === quote) quote = null;
+    } else if (ch === '"' || ch === "'") {
+      quote = ch;
+    } else if (ch === '/' && css[i + 1] === '*') {
+      const end = css.indexOf('*/', i + 2);
+      i = end === -1 ? css.length : end + 1;
+    } else if (ch === '{') {
+      return i;
+    }
+  }
+  return -1;
+}
+
+// True when the prelude is nothing but literal matchers, so what parseMatchers
+// read from it is the whole truth.
+function preludeIsStatic(prelude) {
+  return stripComments(prelude).replace(MATCHER, '').trim().replace(/^[\s,]*$/, '') === '';
+}
+
+export function parseSourceBlocks(source) {
+  const blocks = [];
+  const re = /@-moz-document\b/gi;
+  let match;
+  while ((match = re.exec(source))) {
+    const end = preludeEnd(source, match.index + match[0].length);
+    if (end === -1) break;
+    const prelude = source.slice(match.index + match[0].length, end);
+    blocks.push({ matchers: parseMatchers(prelude), static: preludeIsStatic(prelude) });
+    re.lastIndex = end;
+  }
+  return blocks;
+}
+
+// A style can be indexed without compiling only when every block's sites are
+// literal and at least one matcher was found.
+export function sourceIsStatic(blocks) {
+  return blocks.length > 0 && blocks.every(b => b.static && b.matchers.length > 0);
+}

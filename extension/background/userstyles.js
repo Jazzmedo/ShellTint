@@ -112,13 +112,18 @@ function usHostGone() {
 }
 
 // ─── Sites the user added ───
-// Settings point a style at more sites (the user's own SearXNG instances).
-// Those matchers are added to every block of that style.
+// Settings point a style at more sites (the user's own SearXNG, Homepage and
+// other self-hosted instances). Those matchers are added to every block of
+// that style, because upstream only knows a placeholder domain for them.
 let usEffective = { key: null, index: null };
 
 function usMatchIndex() {
-    const custom = { searxng: STMatchers.parseSiteList(st.settings.searxngInstances.join('\n')) };
-    const key = `${us.index?.gen}|${JSON.stringify(custom)}`;
+    const custom = {};
+    for (const id of SITE_IDS) {
+        const lines = st.settings.siteInstances?.[id];
+        if (lines?.length) custom[id] = STMatchers.parseSiteList(lines.join('\n'));
+    }
+    const key = `${us.index?.gen}:${us.index?.rev}|${JSON.stringify(custom)}`;
     if (usEffective.key === key) return usEffective.index;
     let index = us.index;
     if (index && Object.values(custom).some(list => list.length)) {
@@ -165,6 +170,44 @@ function usSiteState(url) {
         siteEnabled: !usSiteDisabled(url),
         globalEnabled: st.settings.websiteStyling,
     };
+}
+
+// ─── Toolbar badge ───
+// How many stylesheets a page is actually wearing, the way Stylus counts them:
+// the Catppuccin styles that match, plus the user's own that are switched on.
+function usAppliedCount(url) {
+    if (!st.settings.websiteStyling || !STMatchers.isThemeable(url) || usSiteDisabled(url)) return 0;
+    const mine = STCustomStyles.matchingStyles(st.customStyles, url);
+    const index = mine.some(s => s.replaceCatppuccin) ? null : usMatchIndex();
+    const catppuccin = index
+        ? index.styles.filter(style => style.blocks.some(b => STMatchers.blockMatches(b, url))).length
+        : 0;
+    return catppuccin + mine.length;
+}
+
+async function usSetBadge(tabId, url) {
+    const count = usAppliedCount(url);
+    try {
+        await browser.action.setBadgeText({ tabId, text: count ? String(count) : '' });
+        if (!count) return;
+        const roles = st.palette?.roles ?? {};
+        await browser.action.setBadgeBackgroundColor({ tabId, color: roles.primary ?? '#d71921' });
+        // Firefox picks a readable colour itself when this is unavailable.
+        await browser.action.setBadgeTextColor?.({ tabId, color: roles.on_primary ?? '#ffffff' });
+    } catch { /* the tab closed, or the badge is not available */ }
+}
+
+// The badge follows the top-level document, not subframes.
+function usBadgeForTab(tabId) {
+    browser.tabs.get(tabId).then(tab => {
+        if (tab?.url) usSetBadge(tabId, tab.url);
+    }).catch(() => { });
+}
+
+function usRefreshBadges() {
+    browser.tabs.query({}).then(tabs => {
+        for (const tab of tabs) if (tab.url) usSetBadge(tab.id, tab.url);
+    }).catch(() => { });
 }
 
 function usSummary() {
@@ -271,6 +314,8 @@ async function usRefreshAll() {
     // Frames that are gone keep nothing to remove.
     for (const key of [...us.applied.keys()]) if (!seen.has(key)) us.applied.delete(key);
     usPersistSoon();
+    // Settings, the palette or the index just changed; every count may differ.
+    usRefreshBadges();
 }
 
 // Returns true when the index is new and open pages need refreshing.
@@ -281,7 +326,7 @@ function usSetIndex(index) {
         return true;
     }
     if (!index || index.format !== 1 || !Array.isArray(index.styles)) return false;
-    if (us.index && us.index.gen === index.gen) return false;
+    if (us.index && us.index.gen === index.gen && us.index.rev === index.rev) return false;
     us.index = index;
     // Blocks of older generations stay cached only while a page still shows them.
     const live = new Set(index.styles.flatMap(s => s.blocks.map(b => b.hash)));
@@ -324,11 +369,19 @@ browser.storage.session?.get('usApplied').then(res => {
 // ─── Navigation ───
 browser.webNavigation.onCommitted.addListener(d => {
     // A new document starts without any inserted sheet.
-    if (d.frameId === 0) usForgetTab(d.tabId);
-    else us.applied.delete(usKey(d.tabId, d.frameId));
+    if (d.frameId === 0) {
+        usForgetTab(d.tabId);
+        usSetBadge(d.tabId, d.url);
+    } else {
+        us.applied.delete(usKey(d.tabId, d.frameId));
+    }
     usEnsureFrame(d.tabId, d.frameId, d.url);
 });
 browser.webNavigation.onDOMContentLoaded.addListener(d => usEnsureFrame(d.tabId, d.frameId, d.url));
-browser.webNavigation.onHistoryStateUpdated.addListener(d => usEnsureFrame(d.tabId, d.frameId, d.url));
+browser.webNavigation.onHistoryStateUpdated.addListener(d => {
+    if (d.frameId === 0) usSetBadge(d.tabId, d.url);
+    usEnsureFrame(d.tabId, d.frameId, d.url);
+});
 browser.webNavigation.onReferenceFragmentUpdated.addListener(d => usEnsureFrame(d.tabId, d.frameId, d.url));
 browser.tabs.onRemoved.addListener(tabId => usForgetTab(tabId));
+browser.tabs.onActivated.addListener(({ tabId }) => usBadgeForTab(tabId));
