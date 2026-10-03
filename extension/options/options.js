@@ -548,6 +548,7 @@ function fillEditor(style) {
     set('editor-sites', style.sites || '');
     set('editor-css', style.css || '');
     $('editor-replace').checked = !!style.replaceCatppuccin;
+    cssEditor?.refresh();
 }
 
 function showEditor(id, style) {
@@ -735,9 +736,25 @@ $('style-editor').addEventListener('input', () => {
 $('editor-replace').addEventListener('change', () => {
     if (editor && !editor.saving) setEditorStatus(editorDirty() ? 'Unsaved changes' : '');
 });
+// The variables the suggestions offer, with the current shell colours.
+function editorVars() {
+    const roles = state?.palette?.roles || {};
+    return [
+        ...(customStylesApi?.PALETTE_VARS || []).map(({ name, role }) => {
+            const value = HEX.test(roles[role] || '') ? roles[role] : null;
+            return { name, colour: value, detail: value };
+        }),
+        ...(customStylesApi?.CATPPUCCIN_VARS || []).map(({ name }) => ({ name })),
+    ];
+}
+
+// Registered before the keydown handler below, so an open suggestion list gets Tab and Esc first.
+const cssEditor = globalThis.STCssEditor?.attachCssEditor($('editor-css'), { vars: editorVars, insert: insertText }) || null;
+
 $('editor-sites').addEventListener('input', renderSitesFeedback);
 $('editor-css').addEventListener('input', renderBytes);
 $('editor-css').addEventListener('keydown', event => {
+    if (event.defaultPrevented) return;
     if (event.key === 'Escape') {
         tabMovesFocus = true;
         return;
@@ -788,6 +805,96 @@ $('check-updates').addEventListener('click', () => runAction($('check-updates'),
 $('reconnect').addEventListener('click', () => runAction($('reconnect'), $('reconnect-result'), 'Reconnecting…',
     { type: 'st:reconnect' },
     () => 'Reconnected'));
+
+// ─── Backup ───
+const BACKUP_FILE = 'shelltint-backup.json';
+
+function setResult(id, text, danger = false) {
+    $(id).textContent = text;
+    $(id).classList.toggle('st-danger', danger);
+}
+
+async function backup() {
+    const used = new Set();
+    const files = [];
+    const styles = customStyles.map(style => {
+        const slug = (style.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+        let file = `styles/${slug || 'style'}.css`;
+        if (used.has(file)) file = `styles/${slug || 'style'}-${style.id}.css`;
+        used.add(file);
+        files.push({ name: file, data: style.css || '' });
+        const { css, ...meta } = style;
+        return { ...meta, file };
+    });
+    const manifest = {
+        format: 1,
+        app: 'ShellTint',
+        version: browser.runtime.getManifest().version,
+        exportedAt: new Date().toISOString(),
+        settings,
+        styles,
+    };
+    files.unshift({ name: BACKUP_FILE, data: JSON.stringify(manifest, null, 2) });
+
+    const url = URL.createObjectURL(await STZip.zip(files));
+    const link = el('a', { href: url, download: `shelltint-backup-${new Date().toISOString().slice(0, 10)}.zip` });
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    setResult('backup-result', `Saved ${styles.length} style${styles.length === 1 ? '' : 's'} and your settings`);
+}
+
+async function readBackup(file) {
+    const files = await STZip.unzip(file);
+    const dec = new TextDecoder();
+    const raw = files.get(BACKUP_FILE);
+    if (!raw) throw new Error('This zip is not a ShellTint backup');
+    let manifest;
+    try { manifest = JSON.parse(dec.decode(raw)); } catch { throw new Error('The backup file is damaged'); }
+    if (manifest?.format !== 1) throw new Error('This backup is from a newer ShellTint');
+    const styles = (Array.isArray(manifest.styles) ? manifest.styles : []).map(style => {
+        const css = style && typeof style.file === 'string' ? files.get(style.file) : null;
+        return { ...style, css: css ? dec.decode(css) : '' };
+    });
+    return { settings: manifest.settings, styles };
+}
+
+async function restore(file) {
+    setResult('restore-result', 'Reading…');
+    let data;
+    try {
+        data = await readBackup(file);
+    } catch (error) {
+        setResult('restore-result', error.message || "Couldn't read the backup", true);
+        return;
+    }
+    const n = data.styles.length;
+    if (!window.confirm(`Restore ${n} style${n === 1 ? '' : 's'} and your settings? Styles that are also in the backup are replaced by the backed-up version.`)) {
+        setResult('restore-result', '');
+        return;
+    }
+    const res = await sendSafe({ type: 'st:restore', backup: data });
+    if (!res?.ok) {
+        setResult('restore-result', res?.error || "Couldn't restore the backup", true);
+        return;
+    }
+    const parts = [`${res.added} added`, `${res.replaced} replaced`];
+    if (res.skipped) parts.push(`${res.skipped} skipped`);
+    setResult('restore-result', `Restored: ${parts.join(', ')}`, res.skipped > 0);
+    refresh();
+}
+
+$('backup').addEventListener('click', () => backup().catch(error => setResult('backup-result', error.message || "Couldn't make the backup", true)));
+$('restore').addEventListener('click', () => {
+    if (!confirmLeaveEditor()) return;
+    $('restore-file').click();
+});
+$('restore-file').addEventListener('change', event => {
+    const [file] = event.target.files;
+    event.target.value = '';
+    if (file) restore(file);
+});
 
 function renderMaintenance() {
     const build = state?.build;

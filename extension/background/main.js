@@ -62,6 +62,33 @@ async function deleteStyle(id) {
     return { ok: true };
 }
 
+// Merges a backup: settings are applied, styles replace those with the same
+// id and the rest are added; styles not in the backup are kept.
+async function restoreBackup(backup) {
+    if (!backup || typeof backup !== 'object') return { ok: false, error: 'Nothing to restore' };
+    const incoming = STCustomStyles.normaliseStyles(backup.styles);
+    const list = [...st.customStyles];
+    let added = 0;
+    let replaced = 0;
+    for (const style of incoming) {
+        const index = list.findIndex(s => s.id === style.id);
+        if (index !== -1) {
+            list[index] = style;
+            replaced++;
+        } else if (list.length < STCustomStyles.LIMITS.maxStyles) {
+            list.push(style);
+            added++;
+        }
+    }
+    const skipped = (Array.isArray(backup.styles) ? backup.styles.length : 0) - added - replaced;
+    if (backup.settings && typeof backup.settings === 'object') {
+        await saveSettings(normaliseSettings(backup.settings));
+        sendSettingsToHost();
+    }
+    if (added || replaced) await saveCustomStyles(list);
+    return { ok: true, added, replaced, skipped };
+}
+
 function getState() {
     return {
         customStyles: st.customStyles,
@@ -82,6 +109,7 @@ const PAGE_MESSAGES = {
     'st:save-style': message => saveStyle(message.style),
     'st:toggle-style': message => toggleStyle(message.id, message.enabled),
     'st:delete-style': message => deleteStyle(message.id),
+    'st:restore': message => restoreBackup(message.backup),
     'st:detect-sources': () => hostRequest({ type: 'ST_DETECT_SOURCES' }),
     'st:rebuild': message => hostRequest({ type: 'ST_REBUILD', force: !!message.force }),
     'st:check-updates': () => hostRequest({ type: 'ST_CHECK_UPDATES' }),

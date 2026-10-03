@@ -1,3 +1,13 @@
+<p align="center">
+  <img src="docs/brand/banner.svg" alt="ShellTint: your desktop shell's colours on Firefox and 130+ websites" width="100%">
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Jazzmedo/ShellTint?style=flat-square&color=6a4fd8" alt="MIT license"></a>
+  <img src="https://img.shields.io/badge/Firefox-140%2B-f2a68a?style=flat-square&logo=firefoxbrowser&logoColor=white" alt="Firefox 140 or newer">
+  <img src="https://img.shields.io/badge/Linux-DMS%20%7C%20Caelestia%20%7C%20Noctalia%20%7C%20end--4%20%7C%20matugen-b8a4f4?style=flat-square&logo=linux&logoColor=white" alt="Linux: DankMaterialShell, Caelestia, Noctalia, end-4 and matugen">
+</p>
+
 # ShellTint
 
 ShellTint colours Firefox from your desktop shell. It reads the Material You palette that DankMaterialShell, Caelestia, Noctalia, end-4's illogical-impulse or matugen generated, themes the browser toolbar with it, and restyles more than 130 websites (YouTube, GitHub, X, Reddit, Wikipedia and others) using Catppuccin's userstyles recoloured with your palette. When the shell changes theme, the browser and open tabs follow within seconds, without a reload.
@@ -11,6 +21,7 @@ ShellTint has two parts: the browser extension, and a small local helper (a nati
 - Light and dark follow the shell, or can be forced.
 - Pause styling per site from the toolbar popup, or turn it off everywhere; the button counts the styles in use.
 - Style your own self-hosted SearXNG, Homepage, boringproxy and OpenMediaVault.
+- Your own CSS per site, with syntax highlighting and suggestions; settings and styles back up to a zip.
 - Detects the shell automatically; any matugen output works as a fallback.
 - Collects no data.
 
@@ -210,6 +221,8 @@ Write your own CSS for any site, like Stylus. Open ShellTint → My styles → N
   ```
 
   Material roles are `--shelltint-<role>` (`primary`, `on-primary`, `primary-container`, `secondary`, `tertiary`, `error`, `surface`, `on-surface`, `surface-container`, `surface-container-high`, `outline` and more). Once website styles are built, Catppuccin's recoloured slots are available too, as `--shelltint-ctp-<slot>` (`base`, `mantle`, `crust`, `text`, `mauve`, `blue` and so on). The editor lists them all with swatches.
+- **Editor:** CSS is syntax-highlighted, and suggestions for properties, common values and the `--shelltint-*` variables pop up as you type (Ctrl+Space opens them anywhere). ↑/↓ pick, Enter or Tab accepts, Esc closes.
+- **Backup:** Maintenance → Back up to zip saves your settings and every style, each as its own `.css` file. Restore from zip adds the styles in the backup, replaces those you still have with the backed-up version, keeps the rest, and applies the backed-up settings.
 - Styles are stored in the extension and work even when the helper isn't running. Pausing a site or turning off website styling also turns off your styles there.
 
 ## Rebuilds

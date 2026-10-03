@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ShellTint settings</title>
+    <link rel="icon" type="image/svg+xml" href="../icons/icon.svg">
     <link rel="stylesheet" href="../styles/tokens.css">
     <link rel="stylesheet" href="options.css">
 </head>
@@ -194,7 +195,7 @@
                         <span class="field-hint" id="editor-bytes"></span>
                     </div>
                     <textarea class="st-input st-code" id="editor-css" spellcheck="false" autocomplete="off" wrap="off" placeholder="ytd-app {&#10;  background: var(--shelltint-surface);&#10;}"></textarea>
-                    <p class="field-hint">Tab indents · Esc then Tab leaves the editor · Ctrl+S saves</p>
+                    <p class="field-hint">Ctrl+Space suggests · Tab indents · Esc then Tab leaves the editor · Ctrl+S saves</p>
                 </div>
 
                 <div class="rows">
@@ -242,6 +243,20 @@
                 </div>
             </div>
 
+            <h2 class="st-heading">Backup</h2>
+            <p class="field-hint">A zip with your settings and every style in My styles, each as its own .css file. Restoring keeps styles that aren't in the backup.</p>
+            <div class="actions">
+                <div class="action">
+                    <button class="st-btn" id="backup" type="button">Back up to zip</button>
+                    <span class="action-result" id="backup-result" role="status"></span>
+                </div>
+                <div class="action">
+                    <button class="st-btn" id="restore" type="button">Restore from zip…</button>
+                    <input type="file" id="restore-file" accept=".zip,application/zip" hidden>
+                    <span class="action-result" id="restore-result" role="status"></span>
+                </div>
+            </div>
+
             <h2 class="st-heading">Paths</h2>
             <dl class="paths" id="paths"></dl>
         </section>
@@ -262,6 +277,8 @@
     <script src="../shared/custom-styles.js"></script>
     <script src="../shared/theme-map.js"></script>
     <script src="../shared/ui-kit.js"></script>
+    <script src="../shared/zip.js"></script>
+    <script src="../shared/css-editor.js"></script>
     <script src="options.js"></script>
 </body>
 </html>

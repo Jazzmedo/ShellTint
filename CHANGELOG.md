@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Back up your settings and My styles to a zip (Maintenance → Backup), with each style as a readable `.css` file, and restore it on any profile. Restoring merges: styles in the backup are added or replace the same style, others are kept.
+- A new logo: the dot matrix recoloured in the Dusk Wallpaper palette, also used as the settings page's tab icon.
+- The style editor highlights CSS syntax and suggests properties, common values and the `--shelltint-*` variables as you type; Ctrl+Space opens suggestions anywhere.
+
 ## 1.2.0 — 2026-09-22
 
 - Self-hosted sites: point the SearXNG, Homepage, boringproxy and OpenMediaVault styles at your own addresses under Websites → Self-hosted sites. Upstream only knows a placeholder domain for these, so they never applied before. An existing SearXNG list is carried over.

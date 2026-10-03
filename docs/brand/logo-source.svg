@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="1024"
+   height="1024"
+   viewBox="0 0 1024 1024"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
+   sodipodi:docname="drawing.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     inkscape:zoom="0.85253906"
+     inkscape:cx="609.35624"
+     inkscape:cy="582.37801"
+     inkscape:window-width="1857"
+     inkscape:window-height="1024"
+     inkscape:window-x="28"
+     inkscape:window-y="28"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g4"
+       transform="matrix(1.6830377,0,0,1.6830377,-349.71514,-349.71529)">
+      <rect
+         style="fill:#15131c;fill-opacity:1;stroke:#6c618f;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill"
+         id="rect1"
+         width="606.42297"
+         height="606.42371"
+         x="208.78828"
+         y="208.78813"
+         ry="100.734" />
+      <circle
+         style="fill:#6a4fd8;fill-opacity:1;stroke-width:1.57984;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;paint-order:markers stroke fill"
+         id="path1"
+         cx="677.0166"
+         cy="337.40552"
+         r="68.032074" />
+      <circle
+         style="fill:#6a4fd8;fill-opacity:1;stroke-width:1.22574;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;paint-order:markers stroke fill"
+         id="path1-6"
+         cx="496.72736"
+         cy="337.40552"
+         r="52.783501" />
+      <circle
+         style="fill:#6a4fd8;fill-opacity:1;stroke-width:0.928881;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;paint-order:markers stroke fill"
+         id="path1-6-1"
+         cx="344.47015"
+         cy="337.40552"
+         r="40" />
+      <circle
+         style="fill:#b8a4f4;fill-opacity:1;stroke-width:1.57984;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;paint-order:markers stroke fill"
+         id="path1-8"
+         cx="677.0166"
+         cy="509"
+         r="68.032074" />
+      <circle
+         style="fill:#b8a4f4;fill-opacity:1;stroke-width:1.22574;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;paint-order:markers stroke fill"
+         id="path1-6-5"
+         cx="496.72733"
+         cy="509"
+         r="52.783501" />
+      <circle
+         style="fill:#b8a4f4;fill-opacity:1;stroke-width:0.92888;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;paint-order:markers stroke fill"
+         id="path1-6-1-5"
+         cx="344.47018"
+         cy="509"
+         r="39.999966" />
+      <circle
+         style="fill:#fbebd8;fill-opacity:1;stroke-width:1.57984;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;paint-order:markers stroke fill"
+         id="path1-8-1"
+         cx="677.0166"
+         cy="680.59448"
+         r="68.032074" />
+      <circle
+         style="fill:#f2a68a;fill-opacity:1;stroke-width:1.22574;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;paint-order:markers stroke fill"
+         id="path1-6-5-2"
+         cx="496.72736"
+         cy="680.59448"
+         r="52.783504" />
+      <circle
+         style="fill:#f2a68a;fill-opacity:1;stroke-width:0.928881;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;paint-order:markers stroke fill"
+         id="path1-6-1-5-3"
+         cx="344.47015"
+         cy="680.59448"
+         r="40" />
+    </g>
+  </g>
+</svg>
