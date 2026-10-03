@@ -29,6 +29,32 @@ of 256 KB each. `@-moz-document` is not honoured by `insertCSS`, so the
 extension evaluates the site list itself (`shared/matchers.js`) and inserts
 only into frames that match.
 
+Since 1.3.0 the editor colours the CSS and suggests completions. The
+textarea stays the real editor; a `<pre>` under it shows the same text split
+into `<span>`s built with `textContent` (no `innerHTML`). Property names come
+from the browser itself (`getComputedStyle` on the page), the rest from small
+lists in `shared/css-editor.js`. Nothing is fetched.
+
+## Backup and restore (1.3.0)
+
+Maintenance → Backup saves the settings and the user's styles to a zip, and
+restores one the user picks. No new permissions are used.
+
+- **Backup:** `shared/zip.js` writes the zip in the settings page with the
+  browser's own `CompressionStream('deflate-raw')`; there is no zip library.
+  It is saved through a `blob:` URL and an `<a download>` click, so the
+  `downloads` permission is not needed.
+- **Restore:** the file comes only from an `<input type="file">` the user
+  opens. It is read as data: one JSON file with the settings and style details,
+  and one `.css` text file per style. Nothing in it is executed.
+- **Untrusted input:** the reader checks every entry's CRC and refuses zips
+  with more than 500 files or 64 MB uncompressed. It also stops decompressing
+  any entry larger than its header claims. The background script then passes
+  everything through the same normalisers used for storage:
+  `normaliseSettings` (whitelisted keys and types) and `normaliseStyles` (id
+  format, 200 styles, 256 KB each). Restored styles are then applied like any
+  other user style, with `scripting.insertCSS`.
+
 ## No remote code
 
 - The extension contains no remote code, no `eval`/`new Function`, and no `innerHTML`. All JavaScript is in the package, unminified.
