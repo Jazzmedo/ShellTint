@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.2.1 — 2026-10-03
 
 - Back up your settings and My styles to a zip (Maintenance → Backup), with each style as a readable `.css` file, and restore it on any profile. Restoring merges: styles in the backup are added or replace the same style, others are kept.
 - A new logo: the dot matrix recoloured in the Dusk Wallpaper palette, also used as the settings page's tab icon.
