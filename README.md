@@ -297,6 +297,7 @@ ShellTint collects no data and sends nothing anywhere. The extension talks only 
 node --test "builder/test/*.test.mjs"
 python3 -m unittest discover -s host/tests
 ./scripts/package.sh    # web-ext lint + build → dist/
+./release.sh --dry-run  # tests and package only; ./release.sh tags, pushes and publishes a GitHub release
 ```
 
 To add a colour source, see [docs/adapters.md](docs/adapters.md). The helper protocol is in [docs/protocol.md](docs/protocol.md).
