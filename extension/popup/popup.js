@@ -169,5 +169,8 @@ browser.runtime.onMessage.addListener(message => {
     if (message?.type === 'st:changed') load();
 });
 
+// Toolbar colours need the theme API, which Chromium doesn't have.
+if (!browser.theme) for (const node of document.querySelectorAll('[data-needs-theme]')) node.hidden = true;
+
 loadCachedPalette().then(renderStripe);
 load();

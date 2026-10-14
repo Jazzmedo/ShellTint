@@ -121,7 +121,8 @@ const PAGE_MESSAGES = {
     },
 };
 
-browser.runtime.onMessage.addListener((message, sender) => {
+// Replies go through sendResponse: Chromium ignores a Promise returned here.
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (sender.id !== browser.runtime.id || typeof message?.type !== 'string') return undefined;
 
     // The only message content scripts send.
@@ -133,7 +134,9 @@ browser.runtime.onMessage.addListener((message, sender) => {
     const handler = PAGE_MESSAGES[message.type];
     const fromPage = !sender.tab || String(sender.url || '').startsWith(browser.runtime.getURL(''));
     if (!handler || !fromPage) return undefined;
-    return st.ready.then(() => handler(message));
+    st.ready.then(() => handler(message))
+        .then(sendResponse, error => sendResponse({ ok: false, error: error?.message || String(error) }));
+    return true;
 });
 
 browser.runtime.onInstalled.addListener(details => {

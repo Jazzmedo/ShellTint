@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Test and package the ShellTint extension and publish it as a GitHub release.
+# Test and package the ShellTint extension (Firefox and Chromium builds) and
+# publish them as a GitHub release.
 #
 #   ./release.sh            asks for the tag, confirms, tests, builds, tags, pushes, uploads
 #   ./release.sh --dry-run  only tests and builds the current version (no commit, tag, push or upload)
@@ -95,7 +96,8 @@ else
 fi
 
 zip="dist/shelltint-$new_version.zip"
-files=("$zip" "$zip.sha256")
+czip="dist/shelltint-$new_version-chromium.zip"
+files=("$zip" "$zip.sha256" "$czip" "$czip.sha256")
 
 printf '\n%sSummary%s\n' "$B" "$R"
 printf '  Repository:  https://github.com/%s\n' "$REPO"

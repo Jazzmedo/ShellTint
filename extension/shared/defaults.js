@@ -2,6 +2,9 @@
 
 'use strict';
 
+// Chromium names the WebExtension API `chrome`; its MV3 methods return promises too.
+globalThis.browser ??= globalThis.chrome;
+
 (function (root) {
     const SETTINGS_VERSION = 1;
 

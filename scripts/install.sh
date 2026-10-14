@@ -4,11 +4,12 @@
 #   scripts/install.sh [--prefix DIR] [--no-build] [--dry-run] [--with-matugen-hook]
 #
 # Copies host/ and builder/ to ~/.local/share/shelltint, installs the builder's
-# npm dependencies, registers the native messaging host for Firefox-based
-# browsers, and fetches and builds the website styles.
+# npm dependencies, registers the native messaging host for Firefox- and
+# Chromium-based browsers, and fetches and builds the website styles.
 set -euo pipefail
 
 repo="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
+. "$repo/scripts/chromium-browsers.sh"
 prefix="${XDG_DATA_HOME:-$HOME/.local/share}/shelltint"
 build=true
 dry=false
@@ -102,6 +103,25 @@ for target in "${targets[@]}"; do
   if $dry; then say "  would write: $target/shelltint.json"; else printf '%s\n' "$manifest" > "$target/shelltint.json"; fi
   say "✓ registered the helper in $target"
 done
+
+# Chromium-based browsers: same helper, but they name allowed extensions by
+# origin. The ID is pinned by the key in scripts/package.sh. Again only for
+# browsers whose folder already exists.
+chromium_manifest="{
+  \"name\": \"shelltint\",
+  \"description\": \"ShellTint helper\",
+  \"path\": \"$prefix/host/shelltint_host.py\",
+  \"type\": \"stdio\",
+  \"allowed_origins\": [\"chrome-extension://$CHROMIUM_ID/\"]
+}"
+for dir in "${CHROMIUM_DIRS[@]}"; do
+  [ -d "$dir" ] || continue
+  targets+=("$dir/NativeMessagingHosts")
+  run mkdir -p "$dir/NativeMessagingHosts"
+  if $dry; then say "  would write: $dir/NativeMessagingHosts/shelltint.json"; else printf '%s\n' "$chromium_manifest" > "$dir/NativeMessagingHosts/shelltint.json"; fi
+  say "✓ registered the helper in $dir/NativeMessagingHosts"
+done
+
 case " ${targets[*]} " in *"/.var/app/"*)
   say "! Flatpak browsers can't run programs outside their sandbox by default; the helper may not start there." ;;
 esac

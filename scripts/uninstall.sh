@@ -6,6 +6,7 @@
 # --purge also deletes the palette, built styles and mirrored settings.
 # The browser extension itself is removed from the browser's Add-ons page.
 set -euo pipefail
+. "$(dirname "$(readlink -f "$0")")/chromium-browsers.sh"
 
 prefix="${XDG_DATA_HOME:-$HOME/.local/share}/shelltint"
 purge=false
@@ -24,7 +25,8 @@ for manifest in "$HOME/.mozilla/native-messaging-hosts/shelltint.json" \
                 "$HOME/.waterfox/native-messaging-hosts/shelltint.json" \
                 "$HOME/.floorp/native-messaging-hosts/shelltint.json" \
                 "$HOME/.var/app/org.mozilla.firefox/.mozilla/native-messaging-hosts/shelltint.json" \
-                "$HOME/.var/app/io.gitlab.librewolf-community/.librewolf/native-messaging-hosts/shelltint.json"; do
+                "$HOME/.var/app/io.gitlab.librewolf-community/.librewolf/native-messaging-hosts/shelltint.json" \
+                "${CHROMIUM_DIRS[@]/%//NativeMessagingHosts/shelltint.json}"; do
   if [ -f "$manifest" ]; then
     rm -f "$manifest"
     echo "removed $manifest"

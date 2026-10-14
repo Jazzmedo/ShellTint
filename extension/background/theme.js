@@ -19,6 +19,7 @@ function setPalette(palette, error) {
 }
 
 async function applyTheme() {
+    if (!browser.theme) return;   // Chromium has no theme API
     const theme = st.settings.toolbarTheming && st.palette
         ? STThemeMap.themeFromRoles(st.palette.roles, st.palette.mode, st.settings.toolbarStyle)
         : null;

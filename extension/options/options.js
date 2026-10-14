@@ -984,6 +984,9 @@ browser.runtime.onMessage.addListener(message => {
     refreshTimer = setTimeout(refresh, 150);
 });
 
+// Toolbar colours need the theme API, which Chromium doesn't have.
+if (!browser.theme) for (const node of document.querySelectorAll('[data-needs-theme]')) node.hidden = true;
+
 loadCachedPalette();
 renderPermission();
 route();

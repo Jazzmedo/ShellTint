@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Chromium-based browsers (Chromium, Chrome, Brave, Vivaldi, Edge, Helium): website styles, My styles and backup work there too. Load `shelltint-<version>-chromium.zip` unpacked from the release; `scripts/install.sh` registers the helper for them. Toolbar colours stay Firefox-only, since Chromium has no theme API.
+
 ## 1.2.1 — 2026-10-03
 
 - Back up your settings and My styles to a zip (Maintenance → Backup), with each style as a readable `.css` file, and restore it on any profile. Restoring merges: styles in the backup are added or replace the same style, others are kept.

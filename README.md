@@ -5,12 +5,15 @@
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/Jazzmedo/ShellTint?style=flat-square&color=6a4fd8" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/Firefox-140%2B-f2a68a?style=flat-square&logo=firefoxbrowser&logoColor=white" alt="Firefox 140 or newer">
+  <img src="https://img.shields.io/badge/Chromium-120%2B-f2a68a?style=flat-square&logo=googlechrome&logoColor=white" alt="Chromium 120 or newer">
   <img src="https://img.shields.io/badge/Linux-DMS%20%7C%20Caelestia%20%7C%20Noctalia%20%7C%20end--4%20%7C%20matugen-b8a4f4?style=flat-square&logo=linux&logoColor=white" alt="Linux: DankMaterialShell, Caelestia, Noctalia, end-4 and matugen">
 </p>
 
 # ShellTint
 
 ShellTint colours Firefox from your desktop shell. It reads the Material You palette that DankMaterialShell, Caelestia, Noctalia, end-4's illogical-impulse or matugen generated, themes the browser toolbar with it, and restyles more than 130 websites (YouTube, GitHub, X, Reddit, Wikipedia and others) using Catppuccin's userstyles recoloured with your palette. When the shell changes theme, the browser and open tabs follow within seconds, without a reload.
+
+It also runs in Chromium-based browsers (Chromium, Chrome, Brave, Vivaldi, Edge, Helium) for everything except the toolbar colours, which need Firefox's theme API.
 
 ShellTint has two parts: the browser extension, and a small local helper (a native messaging host) that reads your shell's colour files and builds the website styles.
 
@@ -90,6 +93,14 @@ sudo pacman -S python nodejs npm curl util-linux
    It copies the helper to `~/.local/share/shelltint`, installs the builder's npm dependencies, registers the native messaging manifest, detects your shell and builds the website styles once.
 3. Restart the browser, then open ShellTint (toolbar button → settings) and check the Overview page.
 
+### Chromium-based browsers
+
+1. Download `shelltint-<version>-chromium.zip` from the [latest release](https://github.com/Jazzmedo/ShellTint/releases/latest) and unzip it to a folder you'll keep.
+2. Open `chrome://extensions` (Brave: `brave://extensions`), turn on **Developer mode**, choose **Load unpacked** and pick that folder. Its ID should be `paiglabcdaphmocanlbnikkipilidmfk`.
+3. Install the helper as in step 2 above, then restart the browser.
+
+Website styles, My styles and backup work as in Firefox. Toolbar colours are Firefox-only: Chromium has no API for an extension to recolour the browser. For a similar result, choose **Settings → Appearance → GTK** in Chromium, which follows your GTK theme, so a matugen-coloured GTK theme matches your shell.
+
 | Flag | Effect |
 | --- | --- |
 | `--prefix DIR` | Install the helper to `DIR` instead of `~/.local/share/shelltint`. |
@@ -97,7 +108,7 @@ sudo pacman -S python nodejs npm curl util-linux
 | `--dry-run` | Print what would be done and change nothing. |
 | `--with-matugen-hook` | Print a matugen config snippet that rebuilds styles while the browser is closed. Your matugen config is not edited. |
 
-The native messaging manifest goes to `~/.mozilla/native-messaging-hosts/shelltint.json`, which Firefox, Zen and Floorp read. LibreWolf, Waterfox and Flatpak browser folders get a copy only if they already exist.
+The native messaging manifest goes to `~/.mozilla/native-messaging-hosts/shelltint.json`, which Firefox, Zen and Floorp read. LibreWolf, Waterfox and Flatpak browser folders get a copy only if they already exist. Chromium-based browsers get theirs in `NativeMessagingHosts` inside their config folder (`~/.config/chromium`, `~/.config/google-chrome`, `~/.config/BraveSoftware/Brave-Browser`, `~/.config/vivaldi`, `~/.config/microsoft-edge`, `~/.config/net.imput.helium`), again only when that folder exists; the list is in `scripts/chromium-browsers.sh`.
 
 ## Supported colour sources
 
@@ -296,7 +307,7 @@ ShellTint collects no data and sends nothing anywhere. The extension talks only 
 ```sh
 node --test "builder/test/*.test.mjs"
 python3 -m unittest discover -s host/tests
-./scripts/package.sh    # web-ext lint + build → dist/
+./scripts/package.sh    # web-ext lint + Firefox zip, Chromium build (dist/chromium) and zip
 ./release.sh --dry-run  # tests and package only; ./release.sh tags, pushes and publishes a GitHub release
 ```
 
