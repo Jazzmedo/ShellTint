@@ -14,7 +14,7 @@ dist="$repo/dist"
 web_ext=(npx --yes web-ext@8)
 
 # Public key that pins the Chromium extension ID to paiglabcdaphmocanlbnikkipilidmfk
-# (scripts/install.sh allows that ID to start the helper). Only needed to load unpacked.
+# (shelltint.sh allows that ID to start the helper). Only needed to load unpacked.
 chromium_key='MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAm9dqarqDD170B05MLKuTAWdw6ZBVFxkn04tR+9HUBhS0CwInRzxBz3Yu4O9Iz74OwIqZZWxtFHE8cdqAcEQCGk0GILniOoy0R8zaPCacgpoHWUxBpEDUJzgrEp6Gr/3f3DTqfv6JJd6xqLkT0pFa0WumGAjw7QbBXlF5VLn+kbI9EUu4nINMj3GJzfq8CVE814czE0eHGUaDE4J4WxEmnpdzYJU2XyZhPJVhzWJg0ZGvGyp1Xypjlo0QWfal3SkLe8WF0l2xmDV1Ld/TUhrsgCwe9t44K1jPEeUjUENn/s2VCxJOE6NSHOrltyiAPm2622c35sL8EQ/DaDgV6lKzXQIDAQAB'
 
 mkdir -p "$dist"
