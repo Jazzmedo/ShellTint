@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Install and uninstall are now one script, `shelltint.sh`: it detects every supported browser (config folders, `/opt` installs, AppImages) and asks which ones to register, instead of writing every manifest unconditionally — Firefox, Zen, LibreWolf (old and new data dirs), Waterfox, Floorp, Chromium, Chrome, the whole Brave family including Origin, Vivaldi, Edge, Helium and Thorium. `--browsers` skips the question, `--uninstall [--purge]` removes everything, and piping it straight from GitHub works (`curl -fsSL …/shelltint.sh | bash`); the old `scripts/install.sh`, `scripts/uninstall.sh` and `scripts/bootstrap.sh` are gone. Self-hosted-site placeholders now use the home-server domains `*.home.local` / `*.home.internal`.
+- Self-hosted domains (your SearXNG, Homepage and other `siteInstances`) now flow through the helper's style index, so every browser on the computer styles them — including fresh installs and browsers that never received the settings, which is why they were missing in Brave and Helium while working in Zen.
+- Chromium support fixes: the helper is now registered for every known Chromium browser even if it has not run yet (Brave Origin's data folder was missed before), Brave Origin and its beta/nightly variants are in the browser list, and the Chromium build was regenerated.
+- New palette sources for full-desktop users, ported from the tested PhotoCraft adapters: **KDE Plasma** (accent and window colours from `~/.config/kdeglobals`), **GNOME** (accent colour and colour scheme read live from gsettings, GNOME 47+), and **pywal / pywal16** (`~/.cache/wal/colors.json`). Sparse desktop colours are expanded into the full Material 3 role set, and Auto picks them up on desktops without a shell theme.
 - Chromium-based browsers (Chromium, Chrome, Brave, Vivaldi, Edge, Helium): website styles, My styles and backup work there too. Load `shelltint-<version>-chromium.zip` unpacked from the release; `scripts/install.sh` registers the helper for them. Toolbar colours stay Firefox-only, since Chromium has no theme API.
 
 ## 1.2.1 — 2026-10-03

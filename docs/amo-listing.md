@@ -50,7 +50,7 @@ ShellTint needs its companion helper, which reads your shell's colour files. It 
 
 git clone https://github.com/Jazzmedo/ShellTint
 cd ShellTint
-./scripts/install.sh
+./shelltint.sh
 
 Then allow ShellTint to access all websites (Add-ons → ShellTint → Permissions) so it can style them.
 

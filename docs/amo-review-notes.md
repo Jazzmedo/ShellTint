@@ -4,7 +4,7 @@
 
 ShellTint themes the Firefox toolbar and restyles websites using the colour palette of the user's Linux desktop shell (DankMaterialShell, Caelestia, Noctalia, end-4 illogical-impulse, or a matugen output file).
 
-It needs a companion native messaging host, the ShellTint helper, published with the source at https://github.com/Jazzmedo/ShellTint and installed by the user with `./scripts/install.sh`. The helper is a Python program that reads the shell's colour files and serves CSS. Without the helper the extension shows an install prompt and does nothing else.
+It needs a companion native messaging host, the ShellTint helper, published with the source at https://github.com/Jazzmedo/ShellTint and installed by the user with `./shelltint.sh`. The helper is a Python program that reads the shell's colour files and serves CSS. Without the helper the extension shows an install prompt and does nothing else.
 
 ## Permissions
 
@@ -74,7 +74,7 @@ ShellTint is based on MatugenFox by Ubaid (MIT, https://github.com/Ubaidullah-We
 
 ## Testing without a desktop shell
 
-1. Install the helper: `git clone https://github.com/Jazzmedo/ShellTint && cd ShellTint && ./scripts/install.sh` (needs Python 3.8+, Node.js 18+, curl, flock).
+1. Install the helper: `git clone https://github.com/Jazzmedo/ShellTint && cd ShellTint && ./shelltint.sh` (needs Python 3.8+, Node.js 18+, curl, flock).
 2. Save this as `/tmp/shelltint-sample.json`:
 
    ```json

@@ -30,6 +30,32 @@ ShellTint has two parts: the browser extension, and a small local helper (a nati
 
 ## How it works
 
+ShellTint is two small programs on your computer, plus the extension.
+
+- **The script** (`shelltint.sh`) puts the *helper* into
+  `~/.local/share/shelltint` and write one tiny manifest per browser you
+  picked, which is what lets the extension start the helper. Nothing else is
+  installed; `./shelltint.sh --uninstall` undoes all of it.
+- **The helper** (a Python program) reads your shell's palette from wherever
+  your theme keeps it — DankMaterialShell, Caelestia, Noctalia, end-4, KDE,
+  GNOME, pywal or a matugen file — and expands it into a full set of Material
+  colours. It then recolours [Catppuccin's](https://github.com/catppuccin/userstyles)
+  website styles with that palette, on your computer, and keeps them updated.
+  Domains you add for self-hosted sites (your SearXNG, Homepage…) are shared
+  through the helper, so every browser learns them.
+- **The extension** applies the colours: it paints the toolbar and tabs with
+  the palette (Firefox), inserts the recoloured website CSS into pages as you
+  open them, runs your own CSS from My styles, and follows light/dark.
+
+**When your theme changes** (you pick another wallpaper or accent in your
+shell): the helper notices the palette file change within a second, recolours
+the styles for the sites you visit, and pushes the new palette to the
+extension. The toolbar and every open tab recolour within a few seconds, no
+reload. Your own styles follow automatically because they use `--shelltint-*`
+variables. If the browser was closed during the change, it catches up the
+next time it starts.
+
+
 ```
  shell colour file                     ShellTint helper (native host, Python)
  (DMS, Caelestia, Noctalia, ──watch──▶  normalises roles, light/dark
@@ -80,35 +106,72 @@ sudo pacman -S python nodejs npm curl util-linux
 
 ## Install
 
-1. Install the extension from addons.mozilla.org:
-   <https://addons.mozilla.org/firefox/addon/shelltint/>
-2. Install the helper:
+**Step 1 — connect your browsers.** One line; it detects the browsers on your
+computer (their config folders, installs under `/opt`, and AppImages), asks
+which ones to register, and installs the small local helper they all share:
 
-   ```sh
-   git clone https://github.com/Jazzmedo/ShellTint
-   cd ShellTint
-   ./scripts/install.sh
-   ```
+```sh
+curl -fsSL https://raw.githubusercontent.com/Jazzmedo/ShellTint/main/shelltint.sh | bash
+```
 
-   It copies the helper to `~/.local/share/shelltint`, installs the builder's npm dependencies, registers the native messaging manifest, detects your shell and builds the website styles once.
-3. Restart the browser, then open ShellTint (toolbar button → settings) and check the Overview page.
+Pick the browsers from the list (Enter = the ones already in use, `a` = all
+detected, or numbers like `1 3-5`). This step is required for every browser —
+without it the extension can't reach the helper. If you prefer to review the
+code first: `git clone https://github.com/Jazzmedo/ShellTint && cd ShellTint
+&& ./shelltint.sh`.
 
-### Chromium-based browsers
+**Step 2 — install the extension in each browser you picked:**
 
-1. Download `shelltint-<version>-chromium.zip` from the [latest release](https://github.com/Jazzmedo/ShellTint/releases/latest) and unzip it to a folder you'll keep.
-2. Open `chrome://extensions` (Brave: `brave://extensions`), turn on **Developer mode**, choose **Load unpacked** and pick that folder. Its ID should be `paiglabcdaphmocanlbnikkipilidmfk`.
-3. Install the helper as in step 2 above, then restart the browser.
+- **Firefox-based** (Firefox, Zen, LibreWolf, Waterfox, Floorp): install from
+  addons.mozilla.org — <https://addons.mozilla.org/firefox/addon/shelltint/>
+  (their add-ons managers all read AMO). For testing a build, use
+  `about:debugging` → Load Temporary Add-on → `dist/shelltint-<version>.zip`.
+- **Chromium-based** (Chromium, Chrome, Brave and Brave Origin/Beta/Nightly,
+  Vivaldi, Edge, Helium, Thorium): open `chrome://extensions`
+  (`brave://extensions`, `edge://extensions`), turn on **Developer mode**,
+  choose **Load unpacked** and pick the repo's `dist/chromium` folder — that
+  exact folder, or the ID changes and the helper refuses it. The ID must show
+  `paiglabcdaphmocanlbnikkipilidmfk`.
 
-Website styles, My styles and backup work as in Firefox. Toolbar colours are Firefox-only: Chromium has no API for an extension to recolour the browser. For a similar result, choose **Settings → Appearance → GTK** in Chromium, which follows your GTK theme, so a matugen-coloured GTK theme matches your shell.
+**Step 3 — restart the browser**, open ShellTint's settings (toolbar button) and
+check the Overview page shows the helper connected.
+
+### Browsers ShellTint knows
+
+| Family | Browsers (native + Flatpak + AppImage) |
+| --- | --- |
+| Gecko | Firefox, Zen, LibreWolf, Waterfox, Floorp |
+| Chromium | Chromium, Google Chrome (stable/beta/dev), Brave (stable/beta/nightly and **Origin** stable/beta/nightly), Vivaldi (stable/snapshot), Microsoft Edge, Helium, Thorium |
+
+There is no DuckDuckGo browser for Linux yet, so it can't be registered. A
+fork that isn't listed just needs its data-folder name added to
+the registry at the top of `shelltint.sh`.
+
+Website styles, My styles and backup work everywhere. Toolbar colours are
+Firefox-only: Chromium has no API for an extension to recolour the browser.
+For a similar result, choose **Settings → Appearance → GTK** in a Chromium
+browser, which follows your GTK theme, so a matugen-coloured GTK theme matches
+your shell.
 
 | Flag | Effect |
 | --- | --- |
+| `--browsers LIST` | Skip the question: browser ids, `all`, `auto` (the ones already in use) or `none`. |
 | `--prefix DIR` | Install the helper to `DIR` instead of `~/.local/share/shelltint`. |
 | `--no-build` | Skip the first style build; it runs when the browser connects. |
 | `--dry-run` | Print what would be done and change nothing. |
 | `--with-matugen-hook` | Print a matugen config snippet that rebuilds styles while the browser is closed. Your matugen config is not edited. |
 
-The native messaging manifest goes to `~/.mozilla/native-messaging-hosts/shelltint.json`, which Firefox, Zen and Floorp read. LibreWolf, Waterfox and Flatpak browser folders get a copy only if they already exist. Chromium-based browsers get theirs in `NativeMessagingHosts` inside their config folder (`~/.config/chromium`, `~/.config/google-chrome`, `~/.config/BraveSoftware/Brave-Browser`, `~/.config/vivaldi`, `~/.config/microsoft-edge`, `~/.config/net.imput.helium`), again only when that folder exists; the list is in `scripts/chromium-browsers.sh`.
+The installer writes a native-messaging manifest per selected browser: Gecko
+browsers read `<data dir>/native-messaging-hosts/shelltint.json` (for example
+`~/.mozilla`, `~/.zen`, `~/.librewolf` — newer LibreWolf builds use
+`~/.config/librewolf/librewolf`, and the installer handles both), Chromium
+browsers read `<config dir>/NativeMessagingHosts/shelltint.json` (for example
+`~/.config/chromium`, `~/.config/BraveSoftware/Brave-Origin`,
+`~/.config/net.imput.helium`). Flatpak copies go under `~/.var/app/<app id>/`
+when that Flatpak is installed; Flatpak browsers may not be able to start the
+helper because of their sandbox. The browser list and paths live in
+the registry at the top of `shelltint.sh`; `./shelltint.sh --uninstall` removes
+every manifest it could have written.
 
 ## Supported colour sources
 
@@ -119,6 +182,9 @@ The native messaging manifest goes to `~/.mozilla/native-messaging-hosts/shellti
 | Noctalia v4 | `${NOCTALIA_CONFIG_DIR:-~/.config/noctalia/}colors.json` | `colorSchemes.darkMode` in `settings.json` |
 | Noctalia v5 | `~/.cache/shelltint/sources/noctalia.json`, written by a user template (below) | the template's `mode` |
 | end-4 illogical-impulse | `${XDG_STATE_HOME:-~/.local/state}/quickshell/user/generated/colors.json` | inferred: dark when the background is dark |
+| KDE Plasma | `~/.config/kdeglobals` (or `kdedefaults/`) | the scheme name's "Dark" / inferred |
+| GNOME | read live from gsettings (accent colour, colour scheme) | `color-scheme` (`prefer-dark`) |
+| pywal | `~/.cache/wal/colors.json` | inferred: dark when the background is dark |
 | Matugen file | any JSON or CSS-variables file you choose | the file's `mode` / `is_dark`, else inferred |
 
 Notes:
@@ -178,7 +244,7 @@ Copy the matugen template above to `~/.config/noctalia/templates/shelltint.json`
 
 | Setting | Values | Default | Where |
 | --- | --- | --- | --- |
-| `paletteSource` | `auto`, `dms`, `caelestia`, `noctalia`, `end4`, `matugen` | `auto` | Colours |
+| `paletteSource` | `auto`, `dms`, `caelestia`, `noctalia`, `end4`, `kde`, `gnome`, `pywal`, `matugen` | `auto` | Colours |
 | `customPalettePath` | path to a JSON or CSS file | empty | Colours (Matugen file) |
 | `mode` | `follow`, `dark`, `light` | `follow` | Colours |
 | `toolbarTheming` | on / off | on | Overview, popup |
@@ -199,7 +265,7 @@ address under **Websites → Self-hosted sites** and that style starts applying:
 | Style | Notes |
 | --- | --- |
 | SearXNG | |
-| Homepage | Already matches any host starting `homepage.`, e.g. `homepage.home.local`. |
+| Homepage | Already matches any host starting `homepage.`, e.g. `homepage.home.internal`. |
 | boringproxy | |
 | OpenMediaVault | |
 
@@ -240,7 +306,7 @@ Write your own CSS for any site, like Stylus. Open ShellTint → My styles → N
 
 - While the browser runs, the helper watches the active source's files. When they change and settle, it writes a new palette, recolours the toolbar and rebuilds the website styles in the background. Open tabs switch to the new styles without a reload.
 - When the browser connects, the helper checks Catppuccin for new userstyles, at most once every 10 minutes (turn off with `autoCheckUpdates`).
-- To rebuild while the browser is closed, add ShellTint's hook to matugen (print the snippet with `./scripts/install.sh --with-matugen-hook`):
+- To rebuild while the browser is closed, add ShellTint's hook to matugen (print the snippet with `./shelltint.sh --with-matugen-hook`):
 
   ```toml
   post_hook = '~/.local/share/shelltint/builder/scripts/matugen-hook.sh'
@@ -281,8 +347,8 @@ Then use Maintenance → Rebuild styles now.
 ## Uninstall
 
 ```sh
-./scripts/uninstall.sh          # helper and native messaging manifests
-./scripts/uninstall.sh --purge  # also ~/.cache/shelltint and ~/.config/shelltint
+./shelltint.sh --uninstall          # helper and native messaging manifests
+./shelltint.sh --uninstall --purge  # also ~/.cache/shelltint and ~/.config/shelltint
 ```
 
 Then remove the extension from `about:addons`.
