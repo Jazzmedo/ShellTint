@@ -129,12 +129,17 @@ class Host:
             if palette_changed or first:
                 self.debouncer.reset(signature(self.watch_paths()))
                 self.refresh_palette(force_send=palette_changed)
+            if any(before.get(k) != incoming.get(k) for k in ("siteInstances", "disabledSites")):
+                # Other browsers get the new domains through the shared index.
+                self.send_index(userstyles.with_site_instances(
+                    userstyles.load_index(userstyles.index_key(paths.userstyles_dir())), self.settings))
             if incoming["websiteStyling"]:
                 self.ensure_styles()
 
         elif kind == "ST_SYNC":
             self.send_palette()
-            self.send_index(userstyles.load_index(userstyles.index_key(paths.userstyles_dir())))
+            self.send_index(userstyles.with_site_instances(
+                userstyles.load_index(userstyles.index_key(paths.userstyles_dir())), self.settings))
             self.send_status()
 
         elif kind == "ST_GET_SITE_CSS":
@@ -233,7 +238,7 @@ class Host:
                 index = userstyles.load_index(key)
                 if index is not None or key is None:
                     self.index_key = key
-                    self.send_index(index)
+                    self.send_index(userstyles.with_site_instances(index, self.settings))
             state_sig = signature([paths.state_file()])
             if state_sig != self.state_sig:
                 self.state_sig = state_sig

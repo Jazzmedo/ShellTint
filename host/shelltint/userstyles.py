@@ -2,6 +2,7 @@
 
 import json
 import re
+from urllib.parse import urlparse
 
 from .protocol import MAX_MESSAGE_BYTES, split_for_message
 
@@ -52,6 +53,68 @@ def find_block(root, block_hash):
         if candidate.is_file():
             return candidate
     return None
+
+
+def parse_site_list(lines):
+    """The extension's site-list grammar, as index matchers.
+
+    A bare hostname (or any URL without a path) becomes a domain matcher that
+    covers subdomains; a URL with a path becomes a prefix matcher for exactly
+    that path; comments and junk lines are dropped.
+    """
+    out, seen = [], set()
+    for raw in lines or []:
+        line = str(raw).strip()
+        if not line or line.startswith("#"):
+            continue
+        text = line if re.match(r"^[a-z][a-z0-9+.-]*://", line, re.I) else f"https://{line}"
+        parsed = urlparse(text)
+        if not parsed.hostname or re.search(r"\s", line):
+            continue
+        path = parsed.path.rstrip("/")
+        if path:
+            matcher = {"t": "url-prefix", "v": f"{parsed.scheme}://{parsed.netloc}{path}"}
+        else:
+            matcher = {"t": "domain", "v": parsed.hostname.lower()}
+        key = f"{matcher['t']} {matcher['v']}"
+        if key not in seen:
+            seen.add(key)
+            out.append(matcher)
+    return out
+
+
+def with_site_instances(index, settings):
+    """Merge the user's self-hosted domains into the index matchers.
+
+    The extension also adds these from its own settings, but only for browsers
+    that carry them; merging here means a fresh or never-synced browser styles
+    the user's instances straight from the shared mirror.
+    """
+    if not isinstance(index, dict) or not isinstance(index.get("styles"), list):
+        return index
+    by_id = settings.get("siteInstances") if isinstance(settings, dict) else None
+    if not by_id:
+        return index
+    matchers_by_id = {site_id: parse_site_list(lines) for site_id, lines in by_id.items()}
+    styles = []
+    changed = False
+    for style in index["styles"]:
+        if not isinstance(style, dict):
+            styles.append(style)
+            continue
+        extra = matchers_by_id.get(style.get("id"))
+        if extra:
+            blocks = []
+            for block in style.get("blocks", []):
+                existing = {(m.get("t"), m.get("v")) for m in block.get("matchers", [])}
+                add = [m for m in extra if (m["t"], m["v"]) not in existing]
+                if add:
+                    block = {**block, "matchers": list(block.get("matchers", [])) + add}
+                    changed = True
+                blocks.append(block)
+            style = {**style, "blocks": blocks}
+        styles.append(style)
+    return {**index, "styles": styles} if changed else index
 
 
 def styles_for_blocks(index, hashes):

@@ -132,7 +132,14 @@ function usMatchIndex() {
             styles: index.styles.map(style => {
                 const extra = custom[style.id];
                 if (!extra?.length) return style;
-                return { ...style, blocks: style.blocks.map(b => ({ ...b, matchers: [...b.matchers, ...extra] })) };
+                // The helper's index may already carry these instances; add only the missing ones.
+            return {
+                ...style,
+                blocks: style.blocks.map(b => {
+                    const have = new Set(b.matchers.map(m => `${m.t} ${m.v}`));
+                    return { ...b, matchers: [...b.matchers, ...extra.filter(m => !have.has(`${m.t} ${m.v}`))] };
+                }),
+            };
             }),
         };
     }
