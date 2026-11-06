@@ -6,27 +6,23 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/Jazzmedo/ShellTint?style=flat-square&color=6a4fd8" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/Firefox-140%2B-f2a68a?style=flat-square&logo=firefoxbrowser&logoColor=white" alt="Firefox 140 or newer">
   <img src="https://img.shields.io/badge/Chromium-120%2B-f2a68a?style=flat-square&logo=googlechrome&logoColor=white" alt="Chromium 120 or newer">
-  <img src="https://img.shields.io/badge/Linux-DMS%20%7C%20Caelestia%20%7C%20Noctalia%20%7C%20end--4%20%7C%20matugen-b8a4f4?style=flat-square&logo=linux&logoColor=white" alt="Linux: DankMaterialShell, Caelestia, Noctalia, end-4 and matugen">
+  <img src="https://img.shields.io/badge/Linux-DMS%20%7C%20Caelestia%20%7C%20Noctalia%20%7C%20end--4%20%7C%20GNOME%20%7C%20KDE%20%7C%20pywal%20%7C%20matugen-b8a4f4?style=flat-square&logo=linux&logoColor=white" alt="Linux: DankMaterialShell, Caelestia, Noctalia, end-4, GNOME, KDE, pywal and matugen">
 </p>
 
 # ShellTint
 
-ShellTint colours Firefox from your desktop shell. It reads the Material You palette that DankMaterialShell, Caelestia, Noctalia, end-4's illogical-impulse or matugen generated, themes the browser toolbar with it, and restyles more than 130 websites (YouTube, GitHub, X, Reddit, Wikipedia and others) using Catppuccin's userstyles recoloured with your palette. When the shell changes theme, the browser and open tabs follow within seconds, without a reload.
+ShellTint colours your browser with your desktop's colours. It reads the palette your shell generated (DankMaterialShell, Caelestia, Noctalia, end-4, GNOME, KDE Plasma, pywal, or a matugen file), paints the toolbar with it, and restyles 130+ websites (YouTube, GitHub, X, Reddit, Wikipedia and more) using Catppuccin's userstyles recoloured with your palette. When the shell's theme changes, the browser and open tabs follow within seconds.
 
-It also runs in Chromium-based browsers (Chromium, Chrome, Brave, Vivaldi, Edge, Helium) for everything except the toolbar colours, which need Firefox's theme API.
-
-ShellTint has two parts: the browser extension, and a small local helper (a native messaging host) that reads your shell's colour files and builds the website styles.
+ShellTint has two parts: the **extension**, and a small local **helper** that reads your shell's colour files and builds the website styles. The installer below sets both up.
 
 ## Features
 
-- Toolbar, tabs, address bar and menus take the shell's colours (tonal or vivid style).
-- Catppuccin userstyles for 130+ sites, recompiled with your palette on every theme change — only the ones you actually visit, so a theme change costs about a second.
-- Light and dark follow the shell, or can be forced.
-- Pause styling per site from the toolbar popup, or turn it off everywhere; the button counts the styles in use.
-- Style your own self-hosted SearXNG, Homepage, boringproxy and OpenMediaVault.
-- Your own CSS per site, with syntax highlighting and suggestions; settings and styles back up to a zip.
-- Detects the shell automatically; any matugen output works as a fallback.
-- Collects no data.
+- **Toolbar, tabs and menus** take your shell's colours; light and dark follow the shell.
+- **130+ websites** restyled with Catppuccin's userstyles, recoloured with your palette. A theme change repaints everything in about a second.
+- **Works with your desktop's colours**: DankMaterialShell, Caelestia, Noctalia, end-4, GNOME, KDE Plasma, pywal, or any matugen file — detected automatically.
+- **Your own CSS** per site (like Stylus), with syntax highlighting and colour suggestions.
+- **Backup & restore** your settings and styles to a zip.
+- **Collects no data.** Everything is read and built on your computer.
 
 ## How it works
 
@@ -106,52 +102,39 @@ sudo pacman -S python nodejs npm curl util-linux
 
 ## Install
 
-**Step 1 — connect your browsers.** One line; it detects the browsers on your
-computer (their config folders, installs under `/opt`, and AppImages), asks
-which ones to register, and installs the small local helper they all share:
+**Step 1 — run the installer.** This is required: it installs the helper and
+lets the extension into the browsers you pick.
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/Jazzmedo/ShellTint/main/shelltint.sh | bash
 ```
 
-Pick the browsers from the list (Enter = the ones already in use, `a` = all
-detected, or numbers like `1 3-5`). This step is required for every browser —
-without it the extension can't reach the helper. If you prefer to review the
-code first: `git clone https://github.com/Jazzmedo/ShellTint && cd ShellTint
-&& ./shelltint.sh`.
+It shows the browsers it found (config folders, `/opt` installs, AppImages);
+press Enter to register the ones you use, or list numbers like `1 3-5`. To
+review the script first: `git clone https://github.com/Jazzmedo/ShellTint &&
+cd ShellTint && ./shelltint.sh`.
 
-**Step 2 — install the extension in each browser you picked:**
+**Step 2 — install the extension** in each browser you picked:
 
 - **Firefox-based** (Firefox, Zen, LibreWolf, Waterfox, Floorp): install from
-  addons.mozilla.org — <https://addons.mozilla.org/firefox/addon/shelltint/>
-  (their add-ons managers all read AMO). For testing a build, use
-  `about:debugging` → Load Temporary Add-on → `dist/shelltint-<version>.zip`.
-- **Chromium-based** (Chromium, Chrome, Brave and Brave Origin/Beta/Nightly,
-  Vivaldi, Edge, Helium, Thorium): open `chrome://extensions`
-  (`brave://extensions`, `edge://extensions`), turn on **Developer mode**,
-  choose **Load unpacked** and pick the repo's `dist/chromium` folder — that
-  exact folder, or the ID changes and the helper refuses it. The ID must show
+  <https://addons.mozilla.org/firefox/addon/shelltint/> — they all read AMO.
+- **Chromium-based** (Chromium, Chrome, Brave incl. Origin, Vivaldi, Edge,
+  Helium, Thorium): `chrome://extensions` → enable **Developer mode** →
+  **Load unpacked** → pick the repo's `dist/chromium` folder (or the unzipped
+  `shelltint-<version>-chromium.zip` from a release). The ID must show
   `paiglabcdaphmocanlbnikkipilidmfk`.
 
-**Step 3 — restart the browser**, open ShellTint's settings (toolbar button) and
-check the Overview page shows the helper connected.
+**Step 3 — restart the browser** and open ShellTint's settings (toolbar
+button): the Overview page should say the helper is connected.
 
-### Browsers ShellTint knows
+### What works where
 
-| Family | Browsers (native + Flatpak + AppImage) |
-| --- | --- |
-| Gecko | Firefox, Zen, LibreWolf, Waterfox, Floorp |
-| Chromium | Chromium, Google Chrome (stable/beta/dev), Brave (stable/beta/nightly and **Origin** stable/beta/nightly), Vivaldi (stable/snapshot), Microsoft Edge, Helium, Thorium |
-
-There is no DuckDuckGo browser for Linux yet, so it can't be registered. A
-fork that isn't listed just needs its data-folder name added to
-the registry at the top of `shelltint.sh`.
-
-Website styles, My styles and backup work everywhere. Toolbar colours are
-Firefox-only: Chromium has no API for an extension to recolour the browser.
-For a similar result, choose **Settings → Appearance → GTK** in a Chromium
-browser, which follows your GTK theme, so a matugen-coloured GTK theme matches
-your shell.
+- **Everywhere:** website styles, My styles, backup & restore, per-site pause.
+- **Firefox-based only:** toolbar colours (Chromium has no API for that). Closest
+  alternative there: set **Settings → Appearance → GTK**, which follows your
+  GTK theme.
+- There is no DuckDuckGo browser for Linux yet. Any other fork just needs its
+  data-folder name added to the registry at the top of `shelltint.sh`.
 
 | Flag | Effect |
 | --- | --- |
@@ -161,17 +144,13 @@ your shell.
 | `--dry-run` | Print what would be done and change nothing. |
 | `--with-matugen-hook` | Print a matugen config snippet that rebuilds styles while the browser is closed. Your matugen config is not edited. |
 
-The installer writes a native-messaging manifest per selected browser: Gecko
-browsers read `<data dir>/native-messaging-hosts/shelltint.json` (for example
-`~/.mozilla`, `~/.zen`, `~/.librewolf` — newer LibreWolf builds use
-`~/.config/librewolf/librewolf`, and the installer handles both), Chromium
-browsers read `<config dir>/NativeMessagingHosts/shelltint.json` (for example
-`~/.config/chromium`, `~/.config/BraveSoftware/Brave-Origin`,
-`~/.config/net.imput.helium`). Flatpak copies go under `~/.var/app/<app id>/`
-when that Flatpak is installed; Flatpak browsers may not be able to start the
-helper because of their sandbox. The browser list and paths live in
-the registry at the top of `shelltint.sh`; `./shelltint.sh --uninstall` removes
-every manifest it could have written.
+For the curious: the installer writes one small `shelltint.json` per selected
+browser (under its `native-messaging-hosts` or `NativeMessagingHosts` folder —
+for example `~/.mozilla`, `~/.config/librewolf/librewolf`,
+`~/.config/BraveSoftware/Brave-Origin`, `~/.config/net.imput.helium`), plus a
+Flatpak copy under `~/.var/app/<app id>/` when that Flatpak is installed.
+Flatpak browsers may not be able to start the helper because of their sandbox.
+`./shelltint.sh --uninstall` removes every manifest it could have written.
 
 ## Supported colour sources
 
@@ -197,7 +176,7 @@ Notes:
 With the source set to Auto, ShellTint uses the first one whose file exists and parses, in this order:
 
 ```
-dms → caelestia → noctalia → end4 → matugen
+dms → caelestia → noctalia → end4 → kde → gnome → pywal → matugen
 ```
 
 To use a different one, open ShellTint → Colours and pick the source. For a matugen file, choose "Matugen file", enter the path and press Check.
