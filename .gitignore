@@ -9,7 +9,3 @@ __pycache__/
 .DS_Store
 .zcode/
 .zcodeignore
-showreel/node_modules/
-showreel/render/frames/
-showreel/render/thumbs/
-showreel/audio/audio.wav
