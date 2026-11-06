@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.5.0 — 2026-11-06
 
 - Install and uninstall are now one script, `shelltint.sh`: it detects every supported browser (config folders, `/opt` installs, AppImages) and asks which ones to register, instead of writing every manifest unconditionally — Firefox, Zen, LibreWolf (old and new data dirs), Waterfox, Floorp, Chromium, Chrome, the whole Brave family including Origin, Vivaldi, Edge, Helium and Thorium. `--browsers` skips the question, `--uninstall [--purge]` removes everything, and piping it straight from GitHub works (`curl -fsSL …/shelltint.sh | bash`); the old `scripts/install.sh`, `scripts/uninstall.sh` and `scripts/bootstrap.sh` are gone. Self-hosted-site placeholders now use the home-server domains `*.home.local` / `*.home.internal`.
 - Self-hosted domains (your SearXNG, Homepage and other `siteInstances`) now flow through the helper's style index, so every browser on the computer styles them — including fresh installs and browsers that never received the settings, which is why they were missing in Brave and Helium while working in Zen.
