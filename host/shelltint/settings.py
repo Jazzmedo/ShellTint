@@ -10,7 +10,7 @@ import json
 from . import paths
 
 VERSION = 1
-SOURCES = ("auto", "dms", "caelestia", "noctalia", "end4", "matugen")
+SOURCES = ("auto", "dms", "caelestia", "noctalia", "end4", "kde", "gnome", "pywal", "matugen")
 DEFAULTS = {
     "version": VERSION,
     "paletteSource": "auto",

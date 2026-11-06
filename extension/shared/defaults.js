@@ -14,16 +14,19 @@ globalThis.browser ??= globalThis.chrome;
         { id: 'caelestia', label: 'Caelestia' },
         { id: 'noctalia', label: 'Noctalia' },
         { id: 'end4', label: 'end-4 illogical-impulse', short: 'end-4' },
+        { id: 'kde', label: 'KDE Plasma', short: 'KDE' },
+        { id: 'gnome', label: 'GNOME' },
+        { id: 'pywal', label: 'pywal' },
         { id: 'matugen', label: 'Matugen file' },
     ];
 
     // Styles whose upstream Catppuccin port only names a placeholder domain,
     // because the site is self-hosted and nobody but its owner knows the host.
     const SELF_HOSTED_SITES = [
-        { id: 'searxng', label: 'SearXNG', placeholder: 'searxng.home.local\nhttps://search.example.com/searx/' },
-        { id: 'homepage', label: 'Homepage', placeholder: 'homepage.home.local\nhttp://192.168.1.10:3000/' },
-        { id: 'boringproxy', label: 'boringproxy', placeholder: 'boringproxy.home.local' },
-        { id: 'openmediavault', label: 'OpenMediaVault', placeholder: 'omv.home.local' },
+        { id: 'searxng', label: 'SearXNG', placeholder: 'searxng.home.internal' },
+        { id: 'homepage', label: 'Homepage', placeholder: 'homepage.home.internal' },
+        { id: 'boringproxy', label: 'boringproxy', placeholder: 'boringproxy.home.internal' },
+        { id: 'openmediavault', label: 'OpenMediaVault', placeholder: 'openmediavault.home.internal' },
     ];
     const SITE_IDS = SELF_HOSTED_SITES.map(s => s.id);
 

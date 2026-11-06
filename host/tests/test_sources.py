@@ -5,7 +5,7 @@ import time
 import unittest
 
 from helpers import FIXTURES, TempHome
-from shelltint import palette
+from shelltint import colors, palette
 from shelltint.sources import AUTO_ORDER, REGISTRY, SourceError
 
 HEX = re.compile(r"^#[0-9a-f]{6}$")
@@ -149,6 +149,73 @@ class Sources(TempHome):
 
     def test_registry_matches_auto_order(self):
         self.assertEqual(sorted(REGISTRY), sorted(AUTO_ORDER))
+
+    # ─── KDE Plasma ───
+    def test_kde_accent_and_window_colors(self):
+        self.place("kde/kdeglobals", ".config/kdeglobals")
+        result = self.resolve()
+        self.assertEqual((result["source"]["id"], result["mode"], result["modeSource"]), ("kde", "dark", "shell"))
+        self.assertEqual(result["roles"]["primary"], "#7676d3")
+        self.assertEqual(result["roles"]["surface"], "#1b1e20")
+        self.assertEqual(result["roles"]["on_surface"], "#eff0f1")
+        for role in ("primary_container", "surface_container_high", "outline_variant"):
+            self.assertIn(role, result["roles"])
+        self.assertEqual(result["roles"]["error"], "#ed1515")
+        self.check_roles(result["roles"])
+
+    def test_kde_auto_accent_falls_back_to_selection(self):
+        self.place("kde/kdeglobals-auto", ".config/kdeglobals")
+        result = self.resolve()
+        self.assertEqual(result["roles"]["primary"], "#3daee9")
+        self.assertEqual(result["mode"], "light")
+
+    # ─── pywal ───
+    def test_pywal_anchors_on_wal_colors(self):
+        self.place("wal/colors.json", ".cache/wal/colors.json")
+        result = self.resolve()
+        self.assertEqual((result["source"]["id"], result["mode"], result["modeSource"]), ("pywal", "dark", "inferred"))
+        self.assertEqual(result["roles"]["primary"], "#7aa2f7")
+        self.assertEqual(result["roles"]["background"], "#1a1b26")
+        self.assertEqual(result["roles"]["on_surface"], "#c0caf5")
+        self.assertEqual(len(result["extras"]["dank16"]), 16)
+        self.check_roles(result["roles"])
+
+    def test_pywal_broken_file_raises(self):
+        self.place("matugen/broken.json", ".cache/wal/colors.json")
+        with self.assertRaises(SourceError):
+            self.resolve()
+
+    # ─── GNOME ───
+    def test_gnome_accent_engine_roles(self):
+        from shelltint.sources.de import GNOME_ACCENTS, accent_engine
+        dark = accent_engine(GNOME_ACCENTS["purple"], "dark")
+        self.assertEqual(dark["primary"], "#9141ac")
+        self.assertEqual(dark["on_primary"], "#ffffff")
+        self.assertLess(int(dark["background"][1:3], 16), 60)   # dark bg
+        light = accent_engine(GNOME_ACCENTS["red"], "light")
+        self.assertEqual(light["on_primary"], "#ffffff")
+        self.assertGreater(int(light["background"][1:3], 16), 200)  # light bg
+        self.check_roles(colors.derive_missing(dark, "dark"))
+
+    def test_gnome_parse_reads_gsettings(self):
+        import os
+        from unittest import mock
+        from shelltint.sources import gnome
+        old = os.environ.get("XDG_CURRENT_DESKTOP")
+        os.environ["XDG_CURRENT_DESKTOP"] = "GNOME:ubuntu"
+        try:
+            with mock.patch.object(gnome, "gsettings_get",
+                                   side_effect=["purple", "prefer-dark"]):
+                result = self.resolve(paletteSource="gnome", mode="follow")
+        finally:
+            if old is None:
+                os.environ.pop("XDG_CURRENT_DESKTOP", None)
+            else:
+                os.environ["XDG_CURRENT_DESKTOP"] = old
+        self.assertEqual((result["source"]["id"], result["mode"], result["modeSource"]), ("gnome", "dark", "shell"))
+        self.assertEqual(result["roles"]["primary"], "#9141ac")
+        self.assertTrue(any("derived" in w for w in result["warnings"]))
+        self.check_roles(result["roles"])
 
 
 if __name__ == "__main__":

@@ -1,0 +1,12 @@
+[General]
+ColorScheme=BreezeLight
+AccentColor=auto
+
+[Colors:Window]
+BackgroundNormal=252,252,252
+ForegroundNormal=31,31,31
+
+[Colors:View]
+BackgroundNormal=253,253,253
+ForegroundNormal=31,31,31
+SelectionBackground=61,174,233

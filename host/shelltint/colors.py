@@ -99,3 +99,51 @@ def mix(a, b, t):
 def infer_mode(roles):
     base = roles.get("surface") or roles.get("background")
     return None if base is None else ("dark" if is_dark(base) else "light")
+
+
+def luminance(hex_colour):
+    """Relative luminance 0..1 (WCAG)."""
+    return sum(c / 255 * w for c, w in zip(_channels(hex_colour), (0.2126, 0.7152, 0.0722)))
+
+
+def on_color(hex_colour):
+    """Black or white, whichever reads on the given colour."""
+    return "#ffffff" if luminance(hex_colour) <= 0.5 else "#000000"
+
+
+def derive_missing(roles, mode):
+    """Fill the container and surface levels a sparse scheme lacks.
+
+    Needs at least primary and surface/background + on_surface/on_background;
+    container roles are only derived for the accents actually present.
+    """
+    derived = dict(roles)
+    surface = derived.get("surface") or derived.get("background")
+    on_surface = derived.get("on_surface") or derived.get("on_background")
+    variant = derived.get("surface_variant") or surface
+    dark = mode != "light"
+    edge = "#000000" if dark else "#ffffff"
+
+    def put(role, value):
+        if role not in derived and value:
+            derived[role] = value
+
+    put("background", surface)
+    put("on_background", on_surface)
+    if "primary" in derived:
+        put("on_primary", on_color(derived["primary"]))
+    if "error" in derived:
+        put("on_error", on_color(derived["error"]))
+    for accent in ("primary", "secondary", "tertiary", "error"):
+        if accent in derived:
+            put(f"{accent}_container", mix(surface, derived[accent], 0.3 if dark else 0.25))
+            put(f"on_{accent}_container", mix(on_surface, derived[accent], 0.2))
+    put("surface_container_lowest", mix(surface, edge, 0.3 if dark else 0.6))
+    put("surface_container_low", mix(surface, variant, 0.25))
+    put("surface_container", mix(surface, variant, 0.5))
+    put("surface_container_high", mix(surface, variant, 0.75))
+    put("surface_container_highest", variant)
+    if "outline" in derived:
+        put("outline_variant", mix(derived["outline"], surface, 0.5))
+    return dict(sorted(derived.items()))
+

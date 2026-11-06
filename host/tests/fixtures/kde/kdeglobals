@@ -1,0 +1,14 @@
+[General]
+ColorScheme=BreezeDark
+AccentColor=118,118,211
+
+[Colors:Window]
+BackgroundNormal=27,30,32
+ForegroundNormal=239,240,241
+ForegroundNegative=237,21,21
+
+[Colors:View]
+BackgroundNormal=29,32,34
+ForegroundNormal=239,240,241
+SelectionBackground=76,110,245
+SelectionForeground=239,240,241
