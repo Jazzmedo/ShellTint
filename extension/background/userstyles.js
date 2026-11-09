@@ -4,7 +4,8 @@
  * blocks, with their @-moz-document matchers kept as data. The helper sends a
  * small index; this module decides which blocks each frame needs, fetches their
  * CSS on demand (a native message is capped at 1 MB), and inserts it with
- * scripting.insertCSS, which page CSP does not block.
+ * scripting.insertCSS (Firefox) or an adopted stylesheet (Chromium); page CSP
+ * blocks neither.
  *
  * removeCSS only removes a sheet whose text is identical to what was inserted,
  * so the text for a list of hashes is always rebuilt the same way.
@@ -254,6 +255,29 @@ function usCustomCss(url) {
 
 const usJoin = (hashes, custom) => [hashes.length ? usCssFor(hashes) : '', custom].filter(Boolean).join('\n');
 
+// Chromium orders a sheet from insertCSS before the page's own, so a site that
+// ships a rule of equal specificity (a self-hosted SearXNG with its own
+// Catppuccin) overrides ours; Firefox orders it after. A constructed sheet
+// adopted by the document comes last everywhere, and page CSP does not block it.
+const US_ADOPT = !browser.theme;
+
+// One sheet per frame, replaced in place, so the page never flashes unstyled.
+function usSetAdopted(target, css) {
+    return browser.scripting.executeScript({
+        target,
+        world: 'ISOLATED',
+        args: [css],
+        func: text => {
+            let sheet = globalThis.shelltintSheet;
+            if (!sheet) {
+                sheet = globalThis.shelltintSheet = new CSSStyleSheet();
+                document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+            }
+            sheet.replaceSync(text);
+        },
+    });
+}
+
 async function usApplyFrame(tabId, frameId, url) {
     const key = usKey(tabId, frameId);
     const old = us.applied.get(key);
@@ -272,15 +296,19 @@ async function usApplyFrame(tabId, frameId, url) {
     const css = usJoin(hashes, custom.css);
 
     const target = { tabId, frameIds: [frameId] };
-    // Insert before removing, so the page never flashes unstyled in between.
-    if (css) await browser.scripting.insertCSS({ target, css, origin: 'AUTHOR' });
-    if (old) {
-        let oldCss = old.css;
-        if (oldCss === null) {
-            await usFetchCss(old.hashes);
-            oldCss = old.hashes.every(h => us.css.has(h)) ? usJoin(old.hashes, old.custom) : null;
+    if (US_ADOPT) {
+        await usSetAdopted(target, css);
+    } else {
+        // Insert before removing, so the page never flashes unstyled in between.
+        if (css) await browser.scripting.insertCSS({ target, css, origin: 'AUTHOR' });
+        if (old) {
+            let oldCss = old.css;
+            if (oldCss === null) {
+                await usFetchCss(old.hashes);
+                oldCss = old.hashes.every(h => us.css.has(h)) ? usJoin(old.hashes, old.custom) : null;
+            }
+            if (oldCss) await browser.scripting.removeCSS({ target, css: oldCss, origin: 'AUTHOR' }).catch(() => { });
         }
-        if (oldCss) await browser.scripting.removeCSS({ target, css: oldCss, origin: 'AUTHOR' }).catch(() => { });
     }
 
     if (css) us.applied.set(key, { hashes, custom: custom.css, css });
