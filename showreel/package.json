@@ -1,0 +1,16 @@
+{
+  "name": "shelltint-showreel",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild film/film.jsx --bundle --format=iife --outfile=film/bundle.js --define:process.env.NODE_ENV='\"production\"' --jsx=automatic --loader:.jsx=jsx",
+    "build:reel": "esbuild film/reel.jsx --bundle --format=iife --outfile=film/reel-bundle.js --define:process.env.NODE_ENV='\"production\"' --jsx=automatic --loader:.jsx=jsx"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "framer-motion": "^14.10.1",
+    "playwright": "^1.65.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  }
+}
