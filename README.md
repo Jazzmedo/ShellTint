@@ -138,7 +138,7 @@ button): the Overview page should say the helper is connected.
 
 | Flag | Effect |
 | --- | --- |
-| `--browsers LIST` | Skip the question: browser ids, `all`, `auto` (the ones already in use) or `none`. |
+| `--browsers LIST` | Skip the question: browser ids, `all`, `auto` (the ones already in use) or `none`. A browser that was removed but left its profile behind shows as "data only" and is neither ticked nor picked by `auto`. |
 | `--prefix DIR` | Install the helper to `DIR` instead of `~/.local/share/shelltint`. |
 | `--no-build` | Skip the first style build; it runs when the browser connects. |
 | `--dry-run` | Print what would be done and change nothing. |
@@ -150,7 +150,7 @@ for example `~/.mozilla`, `~/.config/librewolf/librewolf`,
 `~/.config/BraveSoftware/Brave-Origin`, `~/.config/net.imput.helium`), plus a
 Flatpak copy under `~/.var/app/<app id>/` when that Flatpak is installed.
 Flatpak browsers may not be able to start the helper because of their sandbox.
-`./shelltint.sh --uninstall` removes every manifest it could have written.
+`./shelltint.sh --uninstall` removes the manifests of the browsers you tick.
 
 ## Supported colour sources
 
@@ -302,7 +302,7 @@ Write your own CSS for any site, like Stylus. Open ShellTint → My styles → N
 - Restart the browser after installing the helper.
 - Flatpak and Snap browsers run sandboxed. They need the manifest inside their sandbox and may not be able to start the helper at all; a native package is recommended.
 
-**Zen:** never create `~/.zen`. Zen treats that folder as its profile folder and opens an empty profile. Zen reads native messaging manifests from `~/.mozilla/native-messaging-hosts`, which the installer already covers.
+**Zen opens with no data:** newer Zen keeps its profile in `~/.config/zen`, but it uses `~/.zen` instead whenever that folder exists, so a stray `~/.zen` hides your profile (the data itself is untouched). The installer never creates `~/.zen` (or `~/.floorp`, `~/.waterfox`, `~/.librewolf`) any more and removes the leftover it used to make. If you still have one, check that it holds only `native-messaging-hosts/shelltint.json`, delete that folder, and restart Zen. Zen also reads native messaging manifests from `~/.mozilla/native-messaging-hosts`, which the installer writes.
 
 **No source detected**
 
@@ -326,9 +326,11 @@ Then use Maintenance → Rebuild styles now.
 ## Uninstall
 
 ```sh
-./shelltint.sh --uninstall          # helper and native messaging manifests
-./shelltint.sh --uninstall --purge  # also ~/.cache/shelltint and ~/.config/shelltint
+./shelltint.sh --uninstall          # a checklist: pick what to remove
+./shelltint.sh --uninstall --purge  # same, with cache and settings ticked too
 ```
+
+The checklist lists only what is on your computer: one row per browser that has ShellTint's manifest, the helper (`~/.local/share/shelltint`), the styles cache (`~/.cache/shelltint`) and your settings (`~/.config/shelltint`). Firefox-based browsers (Firefox, Zen, Floorp, Waterfox) share one manifest, `~/.mozilla/native-messaging-hosts/shelltint.json`, so each installed one gets a row and the shared file is removed only when all of them are ticked; untick Zen and it stays, with a note saying why. Everything is ticked except the cache and settings, which `--purge` ticks for you. Use ↑↓ or j/k to move, space to tick, `a` for all or none, enter to remove, `q` to cancel. Without a terminal (a script, CI) there is no checklist and it removes the ticked-by-default set. `--dry-run` shows what would go.
 
 Then remove the extension from `about:addons`.
 
