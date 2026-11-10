@@ -6,12 +6,12 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/Jazzmedo/ShellTint?style=flat-square&color=6a4fd8" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/Firefox-140%2B-f2a68a?style=flat-square&logo=firefoxbrowser&logoColor=white" alt="Firefox 140 or newer">
   <img src="https://img.shields.io/badge/Chromium-120%2B-f2a68a?style=flat-square&logo=googlechrome&logoColor=white" alt="Chromium 120 or newer">
-  <img src="https://img.shields.io/badge/Linux-DMS%20%7C%20Caelestia%20%7C%20Noctalia%20%7C%20end--4%20%7C%20GNOME%20%7C%20KDE%20%7C%20pywal%20%7C%20matugen-b8a4f4?style=flat-square&logo=linux&logoColor=white" alt="Linux: DankMaterialShell, Caelestia, Noctalia, end-4, GNOME, KDE, pywal and matugen">
+  <img src="https://img.shields.io/badge/Linux-Dux%20%7C%20DMS%20%7C%20Caelestia%20%7C%20Noctalia%20%7C%20end--4%20%7C%20GNOME%20%7C%20KDE%20%7C%20pywal%20%7C%20matugen-b8a4f4?style=flat-square&logo=linux&logoColor=white" alt="Linux: Dux Shell, DankMaterialShell, Caelestia, Noctalia, end-4, GNOME, KDE, pywal and matugen">
 </p>
 
 # ShellTint
 
-ShellTint colours your browser with your desktop's colours. It reads the palette your shell generated (DankMaterialShell, Caelestia, Noctalia, end-4, GNOME, KDE Plasma, pywal, or a matugen file), paints the toolbar with it, and restyles 130+ websites (YouTube, GitHub, X, Reddit, Wikipedia and more) using Catppuccin's userstyles recoloured with your palette. When the shell's theme changes, the browser and open tabs follow within seconds.
+ShellTint colours your browser with your desktop's colours. It reads the palette your shell generated (Dux Shell, Caelestia, Noctalia, end-4, GNOME, KDE Plasma, pywal, or a matugen file), paints the toolbar with it, and restyles 130+ websites (YouTube, GitHub, X, Reddit, Wikipedia and more) using Catppuccin's userstyles recoloured with your palette. When the shell's theme changes, the browser and open tabs follow within seconds.
 
 ShellTint has two parts: the **extension**, and a small local **helper** that reads your shell's colour files and builds the website styles. The installer below sets both up.
 
@@ -19,7 +19,7 @@ ShellTint has two parts: the **extension**, and a small local **helper** that re
 
 - **Toolbar, tabs and menus** take your shell's colours; light and dark follow the shell.
 - **130+ websites** restyled with Catppuccin's userstyles, recoloured with your palette. A theme change repaints everything in about a second.
-- **Works with your desktop's colours**: DankMaterialShell, Caelestia, Noctalia, end-4, GNOME, KDE Plasma, pywal, or any matugen file — detected automatically.
+- **Works with your desktop's colours**: Dux Shell, Caelestia, Noctalia, end-4, GNOME, KDE Plasma, pywal, or any matugen file — detected automatically.
 - **Your own CSS** per site (like Stylus), with syntax highlighting and colour suggestions.
 - **Backup & restore** your settings and styles to a zip.
 - **Collects no data.** Everything is read and built on your computer.
@@ -33,7 +33,7 @@ ShellTint is two small programs on your computer, plus the extension.
   picked, which is what lets the extension start the helper. Nothing else is
   installed; `./shelltint.sh --uninstall` undoes all of it.
 - **The helper** (a Python program) reads your shell's palette from wherever
-  your theme keeps it — DankMaterialShell, Caelestia, Noctalia, end-4, KDE,
+  your theme keeps it — Dux Shell, Caelestia, Noctalia, end-4, KDE,
   GNOME, pywal or a matugen file — and expands it into a full set of Material
   colours. It then recolours [Catppuccin's](https://github.com/catppuccin/userstyles)
   website styles with that palette, on your computer, and keeps them updated.
@@ -54,8 +54,8 @@ next time it starts.
 
 ```
  shell colour file                     ShellTint helper (native host, Python)
- (DMS, Caelestia, Noctalia, ──watch──▶  normalises roles, light/dark
-  end-4, matugen file)                        │
+ (Dux Shell, Caelestia,     ──watch──▶  normalises roles, light/dark
+  Noctalia, end-4, matugen file)              │
                                               ▼
                                 ~/.cache/shelltint/palette.json
                                               │
@@ -156,7 +156,7 @@ Flatpak browsers may not be able to start the helper because of their sandbox.
 
 | Source | File | Light / dark |
 | --- | --- | --- |
-| DankMaterialShell | `~/.cache/DankMaterialShell/dms-colors.json` | `isLightMode` in `~/.local/state/DankMaterialShell/session.json` |
+| Dux Shell (formerly DankMaterialShell, DMS) | `~/.cache/DankMaterialShell/dms-colors.json` | `isLightMode` in `~/.local/state/DankMaterialShell/session.json` |
 | Caelestia | `${XDG_STATE_HOME:-~/.local/state}/caelestia/scheme.json` | the file's `mode` field |
 | Noctalia v4 | `${NOCTALIA_CONFIG_DIR:-~/.config/noctalia/}colors.json` | `colorSchemes.darkMode` in `settings.json` |
 | Noctalia v5 | `~/.cache/shelltint/sources/noctalia.json`, written by a user template (below) | the template's `mode` |
