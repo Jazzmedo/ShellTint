@@ -1,0 +1,9 @@
+node_modules
+dist/
+__pycache__/
+.zcode/
+.zcodeignore
+
+# Left behind from main: Git can't remove these folders when switching branches because they hold ignored files.
+/builder/
+/host/
