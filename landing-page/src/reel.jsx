@@ -46,10 +46,15 @@ export const mix = (a, b, p) => { const A = hex(a), B = hex(b); return `rgb(${A.
 
 export const MONO = '"JetBrains Mono", "JetBrainsMono Nerd Font", monospace';
 export const P = {
+  // dusk, ocean, ember and grey tell the film's own story; the last four are the palettes the visitor can pick.
   dusk: { ink: '#15131c', panel: '#221e2e', violet: '#6a4fd8', lilac: '#b8a4f4', peach: '#f2a68a', cream: '#fbebd8' },
   grey: { ink: '#e3e3e6', panel: '#cfcfd4', violet: '#a9a9b0', lilac: '#bcbcc2', peach: '#9a9aa1', cream: '#3a3a40' },
   ocean: { ink: '#0c1b22', panel: '#14303a', violet: '#1f7a8c', lilac: '#7fd1c7', peach: '#f4d35e', cream: '#eaf6f2' },
   ember: { ink: '#1d110e', panel: '#331d17', violet: '#b3402a', lilac: '#e88a5a', peach: '#9fd08a', cream: '#fbeee0' },
+  mocha: { ink: '#1e1e2e', panel: '#313244', violet: '#cba6f7', lilac: '#b4befe', peach: '#fab387', cream: '#cdd6f4' },
+  gruvbox: { ink: '#282828', panel: '#3c3836', violet: '#d3869b', lilac: '#83a598', peach: '#fe8019', cream: '#ebdbb2' },
+  tokyo: { ink: '#1a1b26', panel: '#24283b', violet: '#7aa2f7', lilac: '#bb9af7', peach: '#ff9e64', cream: '#c0caf5' },
+  jozi: { ink: '#0f1424', panel: '#1b2238', violet: '#e63e8b', lilac: '#4cc9f0', peach: '#ffb703', cream: '#f1e9da' },
 };
 export const KEYS = Object.keys(P.dusk);
 export function usePal(stops, delay = 0) {
@@ -102,7 +107,8 @@ export function Scene({ a, b, enter, bg = P.dusk.ink, children }) {
   const near = t => t >= a - 2 && t < b + 1;
   const [on, setOn] = useState(() => near(clock.get()));
   useMotionValueEvent(clock, 'change', t => setOn(prev => (prev === near(t) ? prev : !prev)));
-  return <motion.div style={{ ...abs(0, 0, 1920, 1080, { background: bg, isolation: 'isolate' }), visibility, clipPath }}>{on && children}</motion.div>;
+  // The extra fill layer lets the scene's colour run past the 16:9 frame inside the wipe, so no rectangle shows in wide or tall windows.
+  return <motion.div style={{ ...abs(0, 0, 1920, 1080, { background: bg, isolation: 'isolate' }), visibility, clipPath }}><motion.div style={{ position: 'absolute', inset: -3000, background: bg }} />{on && children}</motion.div>;
 }
 export function IrisRing({ a, x, y, color }) {
   const R = t => inOutQuart(seg(t, a, a + 0.6)) * MAXR;
@@ -258,18 +264,7 @@ function Bar({ i }) {
   return <motion.div style={{ ...abs(1390 + i * 82, 0, 62, 0, { borderRadius: 14, background: P.dusk[['violet', 'lilac', 'peach', 'cream', 'violet'][i]], top: 'auto', bottom: 630, height: h }) }} />;
 }
 function DuxChip() {
-  const at = 4.85, k = (t) => outCubic(seg(t, 5.5, 5.75));
-  const oldY = useT(t => `${-k(t) * 100}%`), newY = useT(t => `${(1 - k(t)) * 100}%`);
-  const strike = useT(t => seg(t, 5.2, 5.42));
-  const line = { position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' };
-  return (
-    <Rise at={at} y={34} style={{ ...chipStyle, width: 320, padding: 0, position: 'relative', overflow: 'hidden' }}>
-      <motion.div style={{ ...line, y: oldY }}>
-        <span style={{ position: 'relative' }}>DMS<motion.span style={{ position: 'absolute', left: -8, right: -8, top: '54%', height: 6, background: P.dusk.peach, scaleX: strike, transformOrigin: '0 50%' }} /></span>
-      </motion.div>
-      <motion.div style={{ ...line, y: newY, color: P.dusk.peach }}>Dux Shell</motion.div>
-    </Rise>
-  );
+  return <Rise at={4.85} y={34} style={chipStyle}>Dux Shell</Rise>;
 }
 function C() {
   const labelStyle = { fontFamily: MONO, fontSize: 30, fontWeight: 700, letterSpacing: '0.12em', color: P.dusk.lilac };
@@ -284,7 +279,6 @@ function C() {
         <DuxChip />
         {['Caelestia', 'Noctalia', 'end-4'].map((s, i) => <Rise key={s} at={4.93 + i * 0.08} y={34} style={chipStyle}>{s}</Rise>)}
       </div>
-      <Rise at={5.8} y={16} style={{ ...abs(124, 676, 900, 36), fontFamily: MONO, fontSize: 26, color: P.dusk.peach }}>Dux Shell — formerly DMS</Rise>
       <Rise at={6.0} y={20} style={{ ...abs(120, 746, 900, 40), ...labelStyle }}>OR A COLOUR FILE</Rise>
       <div style={{ position: 'absolute', left: 120, top: 800, display: 'flex', gap: 18 }}>
         {['pywal', 'matugen'].map((s, i) => <Rise key={s} at={6.05 + i * 0.08} y={34} style={chipStyle}>{s}</Rise>)}
@@ -462,13 +456,15 @@ function F() {
   const rot = useT(t => -3 + Math.sin(t * 1.4) * 0.8);
   const badge = useT(t => `TABS RELOADED: 0`);
   return (
-    <Scene a={12.5} b={15.5} enter={[1500, 900]}>
+    <Scene a={12.5} b={15.5} enter={[1500, 900]} bg={wall.ink}>
       <div style={abs(0, 0, 1920, 1080)}><Wallpaper pal={wall} bleed /></div>
       <div style={{ position: 'absolute', left: 90, top: 80 }}><Chars text="NO RELOAD." at={12.75} size={210} stagger={0.012} color={wall.cream} /></div>
       <Rise at={12.85} y={60} style={abs(740, 350, 1100, 640)}>
         <motion.div style={{ rotate: rot, y: bob }}><Browser pal={chrome} w={1100} h={640} url="github.com" tab="GitHub" kind="code" /></motion.div>
       </Rise>
-      <motion.div style={{ ...abs(0, 0, 1920, 56), top: 1024, background: bar.panel, display: 'flex', alignItems: 'center', gap: 14, padding: '0 28px' }}>
+      {/* The bar's fill runs past the frame (sideways and down) so it reaches the window's edges. */}
+      <motion.div style={{ ...abs(-3000, 1024, 7920, 3056), background: bar.panel }} />
+      <motion.div style={{ ...abs(0, 0, 1920, 56), top: 1024, display: 'flex', alignItems: 'center', gap: 14, padding: '0 28px' }}>
         {[0, 1, 2, 3].map(i => <motion.span key={i} style={{ width: i ? 18 : 46, height: 18, borderRadius: 9, background: i ? bar.lilac : bar.peach }} />)}
         <motion.span style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: 26, color: bar.cream }}>{badge}</motion.span>
       </motion.div>

@@ -1,4 +1,4 @@
-:root { --ink: #15131c; --panel: #221e2e; --violet: #6a4fd8; --lilac: #b8a4f4; --peach: #f2a68a; --cream: #fbebd8; }
+:root { --ink: #1e1e2e; --panel: #313244; --violet: #cba6f7; --lilac: #b4befe; --peach: #fab387; --cream: #cdd6f4; } /* Catppuccin Mocha, the default pick */
 * { box-sizing: border-box; }
 html { background: #15131c; }
 body { margin: 0; font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; color: #fbebd8; background: #15131c; }
@@ -24,7 +24,7 @@ code { font-family: "JetBrains Mono", monospace; }
 
 /* Controls inside the film */
 .fade * { transition: background-color .6s; }
-.pick { all: unset; cursor: pointer; display: grid; gap: 10px; width: 270px; padding: 12px 12px 16px; border: 4px solid transparent; border-radius: 26px; background: var(--panel); color: var(--cream); font: 700 28px Inter, sans-serif; text-transform: capitalize; transition: background-color .6s, border-color .2s; }
+.pick { all: unset; box-sizing: border-box; cursor: pointer; display: grid; gap: 10px; width: 270px; padding: 12px 12px 16px; border: 4px solid transparent; border-radius: 26px; background: var(--panel); color: var(--cream); font: 700 24px Inter, sans-serif; white-space: nowrap; transition: background-color .6s, border-color .2s; }
 .pick.on { border-color: var(--peach); }
 .pick:focus-visible { outline: 4px solid var(--lilac); outline-offset: 4px; }
 .thumb { display: block; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; }

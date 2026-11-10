@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Browser, Wallpaper, Rise, Chars, Scene, Ping, P, MONO, abs, chipStyle, mix, seg, useT, spring, KEYS } from './reel.jsx';
-import { NAMES, setTheme, usePal } from './theme.js';
+import { NAMES, LABELS, setTheme, usePal } from './theme.js';
 
 const D = P.dusk;
 const V = Object.fromEntries(KEYS.map(k => [k, `var(--${k})`]));
@@ -97,7 +97,7 @@ export function YourTurn() {
           <Rise key={n} at={27.05 + i * 0.07} y={40}>
             <button role="radio" aria-checked={n === name} onClick={() => setTheme(n)} className={`pick${n === name ? ' on' : ''}`}>
               <span className="thumb"><svg viewBox="0 0 1920 1080" width="100%" height="100%"><Wallpaper pal={P[n]} /></svg></span>
-              {n}
+              {LABELS[n]}
             </button>
           </Rise>
         ))}

@@ -1,8 +1,8 @@
 // The scroll script. One entry per resting point: the clock plays to `t` (the moment the scene is fully on
 // screen), then holds there for HOLD_VH of scrolling so it can be read before the next wipe.
 // `t` is seconds on the film's global timeline (see Film in reel.jsx).
-export const HOLD_VH = 30;
-const playVh = dt => 22 + 14 * dt;
+export const HOLD_VH = 24;
+const playVh = dt => 16 + 80 * dt;
 
 export const CHAPTERS = ['Hook', 'Your desktop', 'How it works', 'What you get', 'Good to know', 'Your turn', 'Install', 'Done'];
 
@@ -12,7 +12,7 @@ const RAW = [
   [0, 2.85, 'Your desktop shell builds a full colour palette from your wallpaper.'],
   [0, 3.95, 'Your browser ignores it. ShellTint fixes that.'],
   [1, 4.8, 'It reads GNOME and KDE Plasma colours…'],
-  [1, 6.0, '…and shell themes: Dux Shell (formerly DMS), Caelestia, Noctalia and end-4…'],
+  [1, 6.0, '…and shell themes: Dux Shell, Caelestia, Noctalia and end-4…'],
   [1, 6.95, '…or any pywal or matugen colour file. It finds the right one automatically.'],
   [2, 8.0, '1 · Read. A small helper on your computer reads the palette your shell wrote.'],
   [2, 9.3, '2 · Expand. Five colours become a full set of Material colours.'],

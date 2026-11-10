@@ -2,10 +2,11 @@ import { useSyncExternalStore } from 'react';
 import { P } from './reel.jsx';
 
 // The page's palette: the picker sets it, CSS variables recolour the sections.
-let current = 'dusk';
+let current = 'mocha';
 const listeners = new Set();
 
-export const NAMES = ['dusk', 'ocean', 'ember', 'grey'];
+export const NAMES = ['mocha', 'gruvbox', 'tokyo', 'jozi'];
+export const LABELS = { mocha: 'Catppuccin Mocha', gruvbox: 'Gruvbox', tokyo: 'Tokyo Night', jozi: 'Jozi City Nights' };
 
 export function setTheme(name) {
   if (!P[name]) return;

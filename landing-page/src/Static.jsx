@@ -1,4 +1,4 @@
-import { NAMES, setTheme, usePal } from './theme.js';
+import { NAMES, LABELS, setTheme, usePal } from './theme.js';
 
 const CMD = 'curl -fsSL https://raw.githubusercontent.com/Jazzmedo/ShellTint/main/shelltint.sh | bash';
 
@@ -14,7 +14,7 @@ export default function Static({ visible }) {
       </header>
       <section>
         <h2>Works with your desktop</h2>
-        <p>GNOME, KDE Plasma, Dux Shell (formerly DMS), Caelestia, Noctalia, end-4, pywal or any matugen file. It finds the right one automatically.</p>
+        <p>GNOME, KDE Plasma, Dux Shell, Caelestia, Noctalia, end-4, pywal or any matugen file. It finds the right one automatically.</p>
       </section>
       <section>
         <h2>How it works</h2>
@@ -39,7 +39,7 @@ export default function Static({ visible }) {
       <section>
         <h2>Try a palette</h2>
         <div className="static-picks" role="radiogroup" aria-label="Palette">
-          {NAMES.map(n => <button key={n} role="radio" aria-checked={n === name} className={n === name ? 'on' : ''} onClick={() => setTheme(n)}>{n}</button>)}
+          {NAMES.map(n => <button key={n} role="radio" aria-checked={n === name} className={n === name ? 'on' : ''} onClick={() => setTheme(n)}>{LABELS[n]}</button>)}
         </div>
       </section>
       <section>
