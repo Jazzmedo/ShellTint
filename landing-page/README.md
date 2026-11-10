@@ -5,7 +5,7 @@ One scroll-driven film. `src/reel.jsx` is the motion reel from the `showreel` br
 ```sh
 npm install
 npm run dev      # http://localhost:5173
-npm run build    # static site in dist/
+npm run build    # static site in ../docs (committed; GitHub Pages serves /docs)
 ```
 
 - **Pacing and copy:** `src/beats.js`. Each beat is a resting point: the clock plays to the moment a scene is fully on screen, then holds there for `HOLD_VH` of scrolling, with a plain caption under it.
